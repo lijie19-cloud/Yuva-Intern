@@ -37,7 +37,7 @@ hello-world/
 1. Clone this repository:
 
    ```bash
-   git clone YOUR_REPOSITORY_URL
+   git clone https://github.com/lijie19-cloud/Yuva-Intern
    ```
 
 2. Open the project folder in Visual Studio Code.
