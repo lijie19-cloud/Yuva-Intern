@@ -75,4 +75,4 @@ Frontend Development Intern
 
 ---
 
-*Learning, building, and growing as a developer! 🚀*
+*Learning, building, and growing as a developer! *
