@@ -8,7 +8,7 @@ Auto Dealer is a responsive React application for a fictional two-wheeler dealer
 
 ## Live app
 
- `https://autodealer-ten.vercel.app` 
+ https://autodealer-ten.vercel.app
 
 ## Product features
 
@@ -181,10 +181,6 @@ For Netlify, add `public/_redirects` containing:
 ```
 
 For Vercel, configure the project as a Vite SPA or rewrite application routes to `/index.html`. The demo needs no environment variables. A production backend or identity provider will require provider-specific configuration and server-side security rules.
-
-## Screenshots
-
-No screenshots are committed yet. Add reviewed images under `docs/screenshots/` and link them here when available. Useful captures include the home page, service catalogue, booking confirmation, customer dashboard, advisor queue, and admin overview.
 
 ## Known limitations
 
