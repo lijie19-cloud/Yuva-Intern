@@ -1,0 +1,816 @@
+:root {
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-muted: #f1f5f9;
+  --text: #0f172a;
+  --text-muted: #475569;
+  --focus-ring: #6d28d9;
+  --control-border: #64748b;
+  --chart-text: #475569;
+  --chart-grid: #e2e8f0;
+  --chart-surface: #ffffff;
+  --chart-accent: #7c3aed;
+}
+
+/* Give headings and key interface labels a consistent, confident hierarchy. */
+h1,
+h2,
+h3,
+h4 {
+  color: var(--text);
+  font-weight: 750;
+  letter-spacing: -0.025em;
+}
+
+.page-head h1,
+.section-title h2,
+.panel-heading h2,
+.dash-panel h2,
+.auth-form h1 {
+  font-weight: 800;
+}
+
+.stat-card b,
+.sidebar-bottom b,
+.footer-inner > div > b,
+th,
+label,
+.nav-links > a,
+.login {
+  font-weight: 650;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --navy: #e6edf7;
+  --line: #2b394d;
+  --bg: #0b1220;
+  --muted: #bdc8d8;
+  --surface: #111c2b;
+  --surface-raised: #152235;
+  --surface-muted: #1a293d;
+  --text: #e6edf7;
+  --text-muted: #bdc8d8;
+  --focus-ring: #c4b5fd;
+  --control-border: #62738a;
+  --chart-text: #d2dbea;
+  --chart-grid: #34445a;
+  --chart-surface: #152235;
+  --chart-accent: #b49aff;
+  --card-glow: 0 0 0 1px rgb(167 139 250 / 11%), 0 3px 14px rgb(124 58 237 / 8%);
+  --card-glow-hover: 0 0 0 1px rgb(167 139 250 / 32%), 0 0 20px rgb(124 58 237 / 18%), 0 9px 24px rgb(0 0 0 / 25%);
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Keep secondary text readable on light and dark surfaces with shared contrast tokens. */
+.brand-light,
+.brand small,
+.nav-links > a,
+.login,
+.rating,
+.service-content p,
+.service-meta span,
+.steps p,
+.center-body p,
+.center-contact,
+.garage-info p,
+.panel-heading p,
+.stat-label,
+.stat-card > small,
+.sidebar > a,
+.side-heading,
+.sidebar-bottom small,
+.option-card small,
+.center-option small,
+.service-option small,
+.field-label,
+.optional,
+.pagination,
+.profile-details small,
+.auth-form > p,
+.auth-switch,
+.select-label,
+.why-copy > p,
+.why-copy li,
+.testimonial > p,
+.quote-by small,
+.quote-stars span,
+.page-head p,
+.section-title p,
+.detail-description > p,
+.check-list li,
+.booking-panel > p,
+.booking-panel h2 small,
+.panel-row,
+.next-info > span,
+.next-info > small,
+.slots-label,
+.review-list > div > span,
+.fine-print,
+.booking-aside p,
+.booking-aside li,
+.aside-help,
+.confirmation > p,
+.floating-card small,
+.quote-by small,
+.confirm-card span,
+.garage-dates small,
+.table-wrap td small,
+.admin-date,
+.admin-service-summary small,
+.account-activity,
+.account-empty,
+.copyright,
+.footer-inner > div > p,
+.footer-inner > div:not(:first-child) > a,
+.footer-inner > div > span,
+.social-network-links a,
+.empty p,
+.toggle-row small,
+.form-hint,
+.vehicle-toolbar > span,
+.booking-meta,
+.notification-heading > span,
+.notification-item small,
+.notification-empty,
+.photo-help,
+small {
+  color: var(--text-muted);
+}
+
+label { color: var(--text); }
+.progress-step { color: var(--text-muted); }
+.progress-step.active,
+.progress-step.passed { color: #6d28d9; }
+
+html[data-theme="dark"] .progress-step.active,
+html[data-theme="dark"] .progress-step.passed {
+  color: #d1b8ff;
+}
+
+html[data-theme="dark"] .skip-link {
+  background: #c4b5fd;
+  color: #171126;
+}
+
+html[data-theme="dark"] .search:focus-within {
+  outline-color: var(--focus-ring);
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+select,
+textarea,
+.select-label select,
+.panel-heading select,
+.status-select,
+.search,
+.notification-trigger,
+.theme-toggle,
+.slots button,
+.service-option,
+.center-option,
+.option-card,
+.pagination button,
+.logout-btn,
+.btn.outline,
+.admin-service-price .table-action {
+  border-color: var(--control-border);
+}
+
+.advisor-search input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
+  border: 0;
+  background: transparent;
+}
+
+html[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  border-color: var(--control-border);
+}
+
+html[data-theme="dark"] .advisor-search input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
+  border: 0;
+  background: transparent;
+}
+
+html[data-theme="dark"] .search,
+html[data-theme="dark"] .notification-trigger,
+html[data-theme="dark"] .theme-toggle,
+html[data-theme="dark"] .select-label select,
+html[data-theme="dark"] .panel-heading select,
+html[data-theme="dark"] .status-select,
+html[data-theme="dark"] .slots button,
+html[data-theme="dark"] .service-option,
+html[data-theme="dark"] .center-option,
+html[data-theme="dark"] .option-card,
+html[data-theme="dark"] .pagination button,
+html[data-theme="dark"] .logout-btn,
+html[data-theme="dark"] .btn.outline,
+html[data-theme="dark"] .admin-service-price .table-action {
+  border-color: var(--control-border);
+}
+
+body,
+.nav,
+.nav-links,
+.sidebar,
+.service-card,
+.center-card,
+.steps article,
+.dash-panel,
+.stat-card,
+.garage-card,
+.timeline-card,
+.wizard-card,
+.booking-aside,
+.booking-panel,
+.confirm-card,
+.mini-vehicle,
+.option-card,
+.center-option,
+.service-option,
+.floating-card,
+.search,
+.auth-form,
+.pagination button {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 180ms;
+}
+
+html[data-theme="dark"] .nav,
+html[data-theme="dark"] .nav-links,
+html[data-theme="dark"] .sidebar,
+html[data-theme="dark"] .service-card,
+html[data-theme="dark"] .center-card,
+html[data-theme="dark"] .steps article,
+html[data-theme="dark"] .dash-panel,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .garage-card,
+html[data-theme="dark"] .timeline-card,
+html[data-theme="dark"] .wizard-card,
+html[data-theme="dark"] .booking-aside,
+html[data-theme="dark"] .booking-panel,
+html[data-theme="dark"] .confirm-card,
+html[data-theme="dark"] .mini-vehicle,
+html[data-theme="dark"] .option-card,
+html[data-theme="dark"] .center-option,
+html[data-theme="dark"] .service-option,
+html[data-theme="dark"] .floating-card,
+html[data-theme="dark"] .search,
+html[data-theme="dark"] .auth-form,
+html[data-theme="dark"] .pagination button {
+  background-color: var(--surface);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+html[data-theme="dark"] .nav {
+  border-bottom-color: var(--line);
+}
+
+html[data-theme="dark"] .logo-brand {
+  background-color: var(--surface);
+  border: 0;
+}
+
+html[data-theme="dark"] .brand-light,
+html[data-theme="dark"] .brand small,
+html[data-theme="dark"] .nav-links > a,
+html[data-theme="dark"] .login,
+html[data-theme="dark"] .back-link,
+html[data-theme="dark"] .select-label,
+html[data-theme="dark"] .page-head p,
+html[data-theme="dark"] .section-title p,
+html[data-theme="dark"] .service-content p,
+html[data-theme="dark"] .service-meta span,
+html[data-theme="dark"] .rating,
+html[data-theme="dark"] .steps p,
+html[data-theme="dark"] .center-body p,
+html[data-theme="dark"] .center-contact,
+html[data-theme="dark"] .garage-info p,
+html[data-theme="dark"] .panel-heading p,
+html[data-theme="dark"] .stat-label,
+html[data-theme="dark"] .stat-card > small,
+html[data-theme="dark"] .next-info > span,
+html[data-theme="dark"] .next-info > small,
+html[data-theme="dark"] .sidebar > a,
+html[data-theme="dark"] .sidebar > a svg,
+html[data-theme="dark"] .side-heading,
+html[data-theme="dark"] .sidebar-bottom small,
+html[data-theme="dark"] .option-card small,
+html[data-theme="dark"] .center-option small,
+html[data-theme="dark"] .service-option small,
+html[data-theme="dark"] .field-label,
+html[data-theme="dark"] .optional,
+html[data-theme="dark"] .pagination,
+html[data-theme="dark"] .profile-details small,
+html[data-theme="dark"] .auth-form > p,
+html[data-theme="dark"] .auth-switch {
+  color: var(--text-muted);
+}
+
+html[data-theme="dark"] .nav-links > a:hover,
+html[data-theme="dark"] .login:hover,
+html[data-theme="dark"] .sidebar > a.active,
+html[data-theme="dark"] .sidebar > a:hover {
+  color: #c4b5fd;
+}
+
+html[data-theme="dark"] .nav-links > a,
+html[data-theme="dark"] .sidebar > a {
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .how-section,
+html[data-theme="dark"] .why-section,
+html[data-theme="dark"] .section,
+html[data-theme="dark"] .trust-row {
+  background-color: #0e1827;
+}
+
+html[data-theme="dark"] .trust-row,
+html[data-theme="dark"] .trust-row > div {
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .reminder-panel,
+html[data-theme="dark"] .admin-registered,
+html[data-theme="dark"] .demo-notice {
+  background: #162841;
+  border-color: #29476b;
+  color: #d7e7fb;
+}
+
+html[data-theme="dark"] .reminder-panel p,
+html[data-theme="dark"] .demo-notice small {
+  color: #b0c1d6;
+}
+
+html[data-theme="dark"] .menu-toggle,
+html[data-theme="dark"] .logout-btn,
+html[data-theme="dark"] .btn.outline,
+html[data-theme="dark"] .pagination button,
+html[data-theme="dark"] .admin-tabs button,
+html[data-theme="dark"] .table-action,
+html[data-theme="dark"] .mobile-logout {
+  background: var(--surface-raised);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+html[data-theme="dark"] .btn.outline:hover,
+html[data-theme="dark"] .logout-btn:hover,
+html[data-theme="dark"] .admin-tabs button.active,
+html[data-theme="dark"] .sidebar > a.active,
+html[data-theme="dark"] .sidebar > a:hover {
+  background: #35274d;
+}
+
+html[data-theme="dark"] .theme-toggle {
+  background: var(--surface-raised);
+  border-color: var(--line);
+  color: #d7e7fb;
+}
+
+html[data-theme="dark"] .theme-toggle:hover {
+  background: #35274d;
+  border-color: #7252a8;
+}
+
+html[data-theme="dark"] .brand-logo-image {
+  background-color: transparent;
+}
+
+html[data-theme="dark"] .logo-brand {
+  background-color: var(--surface);
+}
+
+html[data-theme="dark"] .footer {
+  background-color: var(--surface);
+  border-top: 1px solid var(--line);
+  color: var(--text);
+}
+
+html[data-theme="dark"] .footer-inner > div > p,
+html[data-theme="dark"] .footer-inner > div:not(:first-child) > a,
+html[data-theme="dark"] .footer-inner > div > span,
+html[data-theme="dark"] .footer .social a,
+html[data-theme="dark"] .copyright {
+  color: var(--text-muted);
+}
+
+html[data-theme="dark"] .footer-inner > div > b {
+  color: var(--text);
+}
+
+html[data-theme="dark"] .footer .social-network-links a {
+  background: var(--surface-raised);
+  color: var(--text-muted);
+}
+
+html[data-theme="dark"] .footer .social-network-links a:hover {
+  background: #7c3aed;
+  color: #fff;
+}
+
+html[data-theme="dark"] .brand-logo-image {
+  /* Preserve the chrome and purple wordmark contrast on the theme surface. */
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 35%));
+}
+
+html[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  background-color: #0d1725;
+  border-color: #34445a;
+  color: var(--text);
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: #8292a8;
+}
+
+html[data-theme="dark"] input[type="checkbox"],
+html[data-theme="dark"] input[type="radio"] {
+  accent-color: #a78bfa;
+}
+
+html[data-theme="dark"] .search input {
+  background: transparent;
+  border: 0;
+}
+
+html[data-theme="dark"] .table-wrap,
+html[data-theme="dark"] table,
+html[data-theme="dark"] th,
+html[data-theme="dark"] td,
+html[data-theme="dark"] .activity-row,
+html[data-theme="dark"] .profile-divider,
+html[data-theme="dark"] .panel-divider,
+html[data-theme="dark"] .garage-dates > span,
+html[data-theme="dark"] .review-list > div,
+html[data-theme="dark"] .admin-bookings > .panel-heading {
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] th,
+html[data-theme="dark"] .garage-dates small,
+html[data-theme="dark"] .confirm-card span,
+html[data-theme="dark"] .slots-label,
+html[data-theme="dark"] .eyebrow {
+  color: #9aabc1;
+}
+
+html[data-theme="dark"] .table-wrap,
+html[data-theme="dark"] table,
+html[data-theme="dark"] td {
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+html[data-theme="dark"] th {
+  background-color: var(--surface-muted);
+  color: var(--text-muted);
+}
+
+html[data-theme="dark"] .tag {
+  background: #35274d;
+  color: #ddd6fe;
+}
+
+html[data-theme="dark"] .status.confirmed {
+  background: #35274d;
+  color: #d8b4fe;
+}
+
+html[data-theme="dark"] .status.pending {
+  background: #453819;
+  color: #f4d27e;
+}
+
+html[data-theme="dark"] .status.in-progress {
+  background: #35274d;
+  color: #d1b8ff;
+}
+
+html[data-theme="dark"] .status.completed {
+  background: #173c2b;
+  color: #9ee2b7;
+}
+
+html[data-theme="dark"] .status.cancelled,
+html[data-theme="dark"] .auth-error {
+  background: #451f25;
+  border-color: #75353e;
+  color: #ffb4bb;
+}
+
+html[data-theme="dark"] .option-card.selected,
+html[data-theme="dark"] .center-option.selected,
+html[data-theme="dark"] .service-option.selected,
+html[data-theme="dark"] .slots button.selected {
+  background: #35274d;
+  border-color: #a78bfa;
+}
+
+html[data-theme="dark"] .vehicle-symbol,
+html[data-theme="dark"] .center-pin,
+html[data-theme="dark"] .appointment-date,
+html[data-theme="dark"] .stat-icon {
+  background: #2b2140;
+  color: #9cc6ff;
+}
+
+html[data-theme="dark"] .mini-vehicle,
+html[data-theme="dark"] .review,
+html[data-theme="dark"] .profile-photo-wrap,
+html[data-theme="dark"] .password-form {
+  background-color: var(--surface-raised);
+}
+
+html[data-theme="dark"] .recharts-cartesian-axis-tick-value,
+html[data-theme="dark"] .recharts-legend-item-text {
+  fill: #a6b4c7;
+  color: #a6b4c7;
+}
+
+html[data-theme="dark"] .recharts-cartesian-grid line {
+  stroke: #2b394d;
+}
+
+html[data-theme="dark"] .recharts-default-tooltip {
+  background-color: #152235 !important;
+  border-color: #34445a !important;
+  color: var(--text) !important;
+}
+
+/* Keep descriptive copy and form labels readable on the darker surfaces. */
+html[data-theme="dark"] p,
+html[data-theme="dark"] small,
+html[data-theme="dark"] label,
+html[data-theme="dark"] .aside-help,
+html[data-theme="dark"] .panel-row,
+html[data-theme="dark"] .panel-row b,
+html[data-theme="dark"] .check-list li,
+html[data-theme="dark"] .admin-service-list > div,
+html[data-theme="dark"] .customer-list > div {
+  color: var(--text-muted);
+}
+
+html[data-theme="dark"] p,
+html[data-theme="dark"] small {
+  font-weight: 500;
+}
+
+html[data-theme="dark"] label,
+html[data-theme="dark"] th,
+html[data-theme="dark"] .stat-label,
+html[data-theme="dark"] .side-heading,
+html[data-theme="dark"] .nav-links > a,
+html[data-theme="dark"] .login {
+  font-weight: 650;
+}
+
+html[data-theme="dark"] h1,
+html[data-theme="dark"] h2,
+html[data-theme="dark"] h3,
+html[data-theme="dark"] h4,
+html[data-theme="dark"] th,
+html[data-theme="dark"] td,
+html[data-theme="dark"] .garage-dates b,
+html[data-theme="dark"] .review-list b,
+html[data-theme="dark"] .confirm-card b,
+html[data-theme="dark"] .activity-row,
+html[data-theme="dark"] .text-link,
+html[data-theme="dark"] .admin-service-list b,
+html[data-theme="dark"] .customer-list b {
+  color: var(--text);
+}
+
+html[data-theme="dark"] .text-link:hover {
+  color: #a6c9ff;
+}
+
+html[data-theme="dark"] .service-meta span,
+html[data-theme="dark"] .detail-description p,
+html[data-theme="dark"] .center-body p,
+html[data-theme="dark"] .center-contact,
+html[data-theme="dark"] .garage-info p,
+html[data-theme="dark"] .next-info small,
+html[data-theme="dark"] .quote-by small,
+html[data-theme="dark"] .confirm-card span,
+html[data-theme="dark"] .auth-switch,
+html[data-theme="dark"] .profile-details small,
+html[data-theme="dark"] .vehicle-toolbar > span,
+html[data-theme="dark"] .booking-meta,
+html[data-theme="dark"] .profile-details > span,
+html[data-theme="dark"] .table-wrap td small,
+html[data-theme="dark"] .admin-date,
+html[data-theme="dark"] .review > p,
+html[data-theme="dark"] .quote-by,
+html[data-theme="dark"] .notification-empty,
+html[data-theme="dark"] .photo-help {
+  color: var(--text-muted);
+}
+
+/* Keep secondary copy and controls readable without changing semantic status colors. */
+html[data-theme="dark"] .nav-links > a,
+html[data-theme="dark"] .login,
+html[data-theme="dark"] .logout-btn,
+html[data-theme="dark"] .mobile-logout,
+html[data-theme="dark"] .service-content p,
+html[data-theme="dark"] .service-meta,
+html[data-theme="dark"] .center-contact,
+html[data-theme="dark"] .form-hint,
+html[data-theme="dark"] .select-label,
+html[data-theme="dark"] .field-label,
+html[data-theme="dark"] .optional,
+html[data-theme="dark"] .copyright span {
+  color: var(--text-muted);
+}
+
+html[data-theme="dark"] .logout-btn:hover {
+  color: #ddd6fe;
+}
+
+html[data-theme="dark"] .steps article > span,
+html[data-theme="dark"] .aside-help a,
+html[data-theme="dark"] .panel-row svg,
+html[data-theme="dark"] .nav-admin {
+  color: #c4b5fd;
+}
+
+html[data-theme="dark"] .notification-trigger,
+html[data-theme="dark"] .notification-panel {
+  color: var(--text);
+  background-color: var(--surface);
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .notification-item,
+html[data-theme="dark"] .notification-all {
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .notification-heading,
+html[data-theme="dark"] .notification-item b {
+  color: var(--text);
+}
+
+html[data-theme="dark"] .notification-heading > span,
+html[data-theme="dark"] .notification-item small,
+html[data-theme="dark"] .notification-empty {
+  color: var(--text-muted);
+}
+
+html[data-theme="dark"] .notification-status {
+  background: #35274d;
+  color: #d8b4fe;
+}
+
+html[data-theme="dark"] .notification-status.completed {
+  background: #173c2b;
+  color: #9ee2b7;
+}
+
+html[data-theme="dark"] .notification-status.pending {
+  background: #453819;
+  color: #f4d27e;
+}
+
+html[data-theme="dark"] .notification-status.cancelled {
+  background: #451f25;
+  color: #ffb4bb;
+}
+
+html[data-theme="dark"] .notification-status.in-progress {
+  background: #35274d;
+  color: #d1b8ff;
+}
+
+/* Extend theme surfaces to dialogs, empty states, and booking controls. */
+html[data-theme="dark"] .form-modal,
+html[data-theme="dark"] .empty,
+html[data-theme="dark"] .center-option,
+html[data-theme="dark"] .service-option,
+html[data-theme="dark"] .slots button,
+html[data-theme="dark"] .slots button.selected,
+html[data-theme="dark"] .filter-controls select,
+html[data-theme="dark"] .vehicle-toolbar,
+html[data-theme="dark"] .search,
+html[data-theme="dark"] .admin-tabs button,
+html[data-theme="dark"] .table-action,
+html[data-theme="dark"] .menu-toggle {
+  color: var(--text);
+  background-color: var(--surface-raised);
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .empty,
+html[data-theme="dark"] .form-modal,
+html[data-theme="dark"] .center-option:hover,
+html[data-theme="dark"] .service-option:hover,
+html[data-theme="dark"] .slots button:hover {
+  box-shadow: var(--card-glow);
+}
+
+html[data-theme="dark"] .how-section,
+html[data-theme="dark"] .why-section,
+html[data-theme="dark"] .section,
+html[data-theme="dark"] .trust-row,
+html[data-theme="dark"] .history-intro,
+html[data-theme="dark"] .next-recommendation,
+html[data-theme="dark"] .review,
+html[data-theme="dark"] .review-list > div,
+html[data-theme="dark"] .garage-dates > span,
+html[data-theme="dark"] .mini-vehicle,
+html[data-theme="dark"] .vehicle-symbol,
+html[data-theme="dark"] .center-pin,
+html[data-theme="dark"] .appointment-date,
+html[data-theme="dark"] .stat-icon {
+  background-color: var(--surface-muted);
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .history-intro {
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+
+html[data-theme="dark"] .history-intro b {
+  color: var(--text);
+}
+
+html[data-theme="dark"] .history-intro small {
+  color: var(--text-muted);
+}
+
+html[data-theme="dark"] .next-recommendation {
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+
+html[data-theme="dark"] .next-recommendation b {
+  color: var(--text);
+}
+
+html[data-theme="dark"] .next-recommendation small {
+  color: var(--text-muted);
+}
+
+html[data-theme="dark"] .next-recommendation > svg {
+  color: #c4b5fd;
+}
+
+html[data-theme="dark"] .center-cover {
+  background: linear-gradient(135deg, #152235, #243b58);
+}
+
+html[data-theme="dark"] .garage-photo {
+  background: linear-gradient(155deg, #1a293d, #263b62);
+}
+
+html[data-theme="dark"] .empty h2,
+html[data-theme="dark"] .form-modal h2,
+html[data-theme="dark"] .empty p,
+html[data-theme="dark"] .form-modal p {
+  color: var(--text);
+}
+
+html[data-theme="dark"] .slots button:not(.selected),
+html[data-theme="dark"] .admin-tabs button:not(.active),
+html[data-theme="dark"] .table-action {
+  color: var(--text-muted);
+}
+
+html[data-theme="dark"] .account-activity,
+html[data-theme="dark"] .account-empty {
+  color: var(--text-muted);
+}
+
+html[data-theme="dark"] .account-state.active {
+  color: #9ee2b7;
+  background: #173c2b;
+}
+
+html[data-theme="dark"] .account-state.inactive {
+  color: #ffb4bb;
+  background: #451f25;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body,
+  body *,
+  body *::before,
+  body *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
+
