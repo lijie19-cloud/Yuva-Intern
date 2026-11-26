@@ -1,18 +1,17 @@
-# Vehicle listing wireframe
+# Vehicle listing wireframe — `/vehicles` and `/dashboard/vehicles`
 
 ## Desktop layout
-- Customer workspace shell with sidebar navigation and page breadcrumb/title.
-- Toolbar: search registration/brand/model, brand and status filters, sort by registration date, and Add Vehicle action.
-- Results count and responsive vehicle card grid (or compact table when explicitly selected).
-- Each card: vehicle image/fallback, registration, brand/model/year, fuel, last service, next due date, status badge, and View details action.
-- Pagination with page size, previous/next, and current-page indication.
+- Customer dashboard shell and page heading with vehicle count and available page actions.
+- Toolbar provides search across registration, brand, and model; brand and status filters; registration-date sort; and page-size control.
+- Responsive vehicle-card grid displays image/fallback, registration number, brand/model/year, fuel type, last service, next due date, and status.
+- Each card links to `/vehicles/:id`; pagination shows current page and previous/next controls.
 
 ## Mobile layout
-- Sidebar becomes a drawer or compact horizontal navigation.
-- Search fills width; filters open in a labeled expandable panel.
-- One card per row; metadata wraps in two-column definition lists; pagination controls remain touch sized.
+- Dashboard navigation collapses to mobile navigation.
+- Search and filters wrap into a compact toolbar; filters remain labeled and keyboard accessible.
+- Cards use one column with metadata wrapping into readable rows; pagination controls remain touch-sized.
 
 ## States and interactions
-- Loading skeletons, recoverable error with retry, empty account state with Add Vehicle, and no-match state with Clear filters.
-- Search, brand/status filters, sorting, and pagination compose; changing filters resets to page one.
-- View details opens `/vehicles/:id`; registration numbers remain readable and are not treated as valid by appearance alone.
+- Search, filters, sort, and page size compose; changing the query or filters resets the page.
+- Loading, recoverable error, no registered vehicles, and no matching search results have distinct feedback and retry/clear actions where available.
+- Missing vehicle images use a descriptive fallback. Invalid or unknown vehicle IDs have a clear details-page recovery route.

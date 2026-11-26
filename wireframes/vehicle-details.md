@@ -1,17 +1,16 @@
-# Vehicle details wireframe
+# Vehicle details wireframe — `/vehicles/:id`
 
 ## Desktop layout
-- Customer workspace shell, breadcrumb back to vehicles, and primary Book Service action.
-- Summary panel: vehicle image or fallback, make/model, year, registration, and current status.
-- Two-column specifications: engine, fuel, mileage, ownership details, and registration date.
-- Upcoming service panel with due date and appointment CTA.
-- Service history timeline/table with date, service type, center, and outcome.
+- Customer dashboard shell, breadcrumb/back-to-vehicles link, and primary **Book service** action.
+- Vehicle summary with image/fallback, registration, brand and model, manufacturing year, and status.
+- Specification panel for engine, fuel type, mileage, and owner information.
+- Next-service-due panel and service history list/table showing appointment date, service, center, and outcome.
 
 ## Mobile layout
-- Summary and booking action appear first; specifications become stacked labeled rows.
-- History becomes a vertical timeline; long registration/customer strings wrap safely.
+- Vehicle summary and booking action appear first; specifications become stacked label/value rows.
+- Service history becomes a vertical list; long registration numbers and names wrap without overflow.
 
 ## States and interactions
-- Unknown ID shows a not-found state with a return link.
-- Missing image uses a neutral vehicle illustration/initial fallback and useful alt text.
-- Book Service preselects this vehicle in `/book-service`; history entries can open the related booking details.
+- Book Service opens `/book-service` with the vehicle preselected when possible.
+- Missing imagery uses an accessible vehicle fallback; an unknown ID shows a not-found message and return link.
+- Service history and upcoming appointment details use demo records and their current status.
