@@ -8,7 +8,39 @@ Auto Dealer is a responsive React application for a fictional two-wheeler dealer
 
 ## Live app
 
- https://autodealer-ten.vercel.app
+Listed deployment: [autodealer-ten.vercel.app](https://autodealer-ten.vercel.app) (availability not verified from this workspace).
+
+## Screenshots
+
+The screenshots below show representative screens from the Auto Dealer frontend. They are stored in `docs/screenshots/` so they render from the repository on GitHub.
+
+### Home page
+
+![Auto Dealer home page with workshop hero, service booking actions, and main navigation](docs/screenshots/home-screen.png)
+
+### Service detail
+
+![Service detail page with workshop photo, service estimate, included work, and booking action](docs/screenshots/service-detail.png)
+
+### Service booking
+
+![Customer booking wizard showing demo-data notice and vehicle selection step](docs/screenshots/booking-form.png)
+
+### Customer dashboard
+
+![Customer dashboard with garage navigation, service summary, and upcoming appointment panel](docs/screenshots/customer-profile.png)
+
+### Administrator overview
+
+![Administrator overview with greeting, operational statistics, and service-operation navigation](docs/screenshots/admin-overview.png)
+
+## Lighthouse report
+
+The supplied Lighthouse evidence shows a mobile-emulated audit of the listed Vercel site. In this recorded run, the page scored **96 Performance**, **96 Accessibility**, **100 Best Practices**, and **92 SEO**. These are scores from this screenshot only; Lighthouse results can vary between runs and devices.
+
+The screenshot shows Responsive emulation at **300 × 149 px** with **No throttling** selected. The viewport is unusually short, so treat the result as evidence of that specific audit setup rather than a general mobile-device score. The image does not include the expanded audit details or a machine-readable Lighthouse report.
+
+![Lighthouse mobile-emulation evidence showing Performance 96, Accessibility 96, Best Practices 100, and SEO 92](docs/screenshots/lighthouse-mobile-evidence.png)
 
 ## Product features
 
@@ -139,6 +171,9 @@ src/
   app.css              Dashboard, component, and responsive styles
   theme.css            Theme tokens and dark-mode overrides
   main.jsx             Application entry point
+docs/
+  screenshots/         README screenshots of the main application screens
+wireframes/            Responsive screen and workflow wireframes
 ```
 
 ## Mock API
@@ -200,8 +235,6 @@ The Vercel rewrite is defined in `vercel.json`. The demo needs no environment va
 - Seed data, prices, availability, analytics, reviews, and dealership contact details are illustrative.
 - Service creation and price edits persist in this browser only; editing all service fields and deleting catalogue services are not included.
 - Email, SMS, push, payment, and live service-center scheduling integrations are not configured.
-- No confirmed live deployment URL, screenshots, or Lighthouse report is included.
-
 ## License
 
 No license file is included. Add a license before redistributing this project publicly.
