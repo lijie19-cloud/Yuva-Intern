@@ -12,7 +12,7 @@ function renderAdvisor() {
 describe("Advisor appointment queue", () => {
   beforeEach(() => {
     localStorage.clear();
-    localStorage.setItem("ad-user", JSON.stringify({ name: "Demo Advisor", email: "advisor@example.com", role: "Service Advisor" }));
+    localStorage.setItem("ad-user", JSON.stringify({ name: "Demo Advisor", email: "advisor@example.com", role: "Service Advisor", serviceCenterId: "cp" }));
   });
 
   afterEach(() => {
@@ -22,12 +22,14 @@ describe("Advisor appointment queue", () => {
 
   it("filters appointments and shows a useful empty state", () => {
     renderAdvisor();
+    expect(screen.getByRole("heading", { name: /^Good (morning|afternoon|evening), Demo\.$/ })).toBeInTheDocument();
     const search = screen.getByRole("textbox", { name: "Search appointments" });
 
     expect(screen.getByText("AD-2608")).toBeInTheDocument();
-    fireEvent.change(search, { target: { value: "south delhi" } });
-    expect(screen.getByText("AD-2594")).toBeInTheDocument();
-    expect(screen.queryByText("AD-2608")).not.toBeInTheDocument();
+    expect(screen.queryByText("AD-2594")).not.toBeInTheDocument();
+    fireEvent.change(search, { target: { value: "brake" } });
+    expect(screen.getByText("AD-2571")).toBeInTheDocument();
+    expect(screen.queryByText("AD-2594")).not.toBeInTheDocument();
 
     fireEvent.change(search, { target: { value: "no matching booking" } });
     expect(screen.getByText("No appointments match this search.")).toBeInTheDocument();

@@ -2,13 +2,13 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, CheckCircle2, MapPin } from "lucide-react";
 import { centers } from "./data";
-import { useApp } from "./state";
+import { useBookings } from "./state";
 import workshopMotorcycle from "./assets/optimized/Engine Diagnostics.jpg";
 import { SectionTitle, ServiceCard } from "./ui";
 
 /** Renders the public home page without loading customer account screens. */
 export function Home() {
-  const { services: currentServices } = useApp();
+  const { services: currentServices } = useBookings();
   return (
     <>
       <section className="hero">

@@ -24,7 +24,7 @@ export function Button({
 }
 
 /** Provides keyboard focus management, Escape dismissal, and semantics for modal dialogs. */
-export function AccessibleDialog({ labelledBy, onClose, className = "", children }) {
+export function AccessibleDialog({ labelledBy, describedBy, onClose, className = "", children }) {
   const dialogRef = useRef(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -61,7 +61,7 @@ export function AccessibleDialog({ labelledBy, onClose, className = "", children
   }, []);
   return (
     <div className="form-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) closeRef.current?.(); }}>
-      <section ref={dialogRef} className={className} role="dialog" aria-modal="true" aria-labelledby={labelledBy} tabIndex={-1}>
+      <section ref={dialogRef} className={className} role="dialog" aria-modal="true" aria-labelledby={labelledBy} aria-describedby={describedBy} tabIndex={-1}>
         {children}
       </section>
     </div>
@@ -89,10 +89,12 @@ export function ServiceCard({ service }) {
   return (
     <article className="service-card">
       <img
-        src={service.image}
+        src={service.thumbnail || service.image}
         alt={`${service.name} motorcycle service`}
         loading="lazy"
         decoding="async"
+        width="678"
+        height="452"
       />
       <div className="service-content">
         <div className="card-top">

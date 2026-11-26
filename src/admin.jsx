@@ -1,8 +1,11 @@
-import React, { useState } from "react";
-import { CalendarDays, CarFront, CheckCircle2, Clock3, Plus, UserRound, X } from "lucide-react";
-import { useApp } from "./state";
-import { getDemoAccounts, isDemoAccountActive, setDemoAccountActive } from "./services/demoAuth";
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { CalendarDays, CarFront, CheckCircle2, Clock3, Plus, UserRound, X, ChevronLeft, ChevronRight, Download, UserPlus, Trash2 } from "lucide-react";
+import { useAuth, useBookings, useNotifications, useVehicles } from "./state";
+import { assignAdvisorServiceCenter, createAdvisorDemoAccount, deleteDemoAccount, getDemoAccounts, isDemoAccountActive, setDemoAccountActive } from "./services/demoAuth";
 import { AccessibleDialog, Status, SearchInput } from "./ui";
+import { centers } from "./data";
+import { firstName, getTimeGreeting } from "./utils/greeting";
 
 /** Formats a numeric service price as Indian rupees. */
 const money = (n) => `₹${Number(n).toLocaleString("en-IN")}`;
@@ -16,33 +19,72 @@ function bookingMonth(dateText) {
   return { year: Number(match[3]), month: date.getMonth(), day: Number(match[1]) };
 }
 
-/** Aggregates completed appointment value by the most recent six active booking months. */
-function revenueSeries(bookings) {
-  const parsed = bookings.map((booking) => ({ booking, date: bookingMonth(booking.date) })).filter((item) => item.date);
-  const newest = parsed.reduce((latest, item) => {
-    const date = item.date.year * 12 + item.date.month;
-    return Math.max(latest, date);
-  }, new Date().getFullYear() * 12 + new Date().getMonth());
-  return Array.from({ length: 6 }, (_, index) => {
-    const stamp = newest - 5 + index;
-    const year = Math.floor(stamp / 12);
-    const month = stamp % 12;
-    const monthName = new Date(year, month, 1).toLocaleString("en", { month: "short" });
-    const amount = parsed.reduce((sum, item) => item.date.year === year && item.date.month === month && item.booking.status === "Completed" ? sum + Number(item.booking.price || 0) : sum, 0);
-    return { name: monthName, revenue: amount / 1000 };
-  });
+/** Normalizes seeded and form-created appointment dates for filters and sorting. */
+function bookingDateValue(booking) {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(booking.appointmentDate || "")) return booking.appointmentDate;
+  const parsed = bookingMonth(booking.date);
+  return parsed ? `${parsed.year}-${String(parsed.month + 1).padStart(2, "0")}-${String(parsed.day).padStart(2, "0")}` : "";
 }
 
-/** Counts appointments by service week in the latest month represented in booking data. */
-function appointmentSeries(bookings) {
-  const parsed = bookings.map((booking) => ({ booking, date: bookingMonth(booking.date) })).filter((item) => item.date);
-  const newest = parsed.reduce((latest, item) => Math.max(latest, item.date.year * 12 + item.date.month), new Date().getFullYear() * 12 + new Date().getMonth());
-  const year = Math.floor(newest / 12);
-  const month = newest % 12;
-  return Array.from({ length: 4 }, (_, week) => ({
-    name: `Week ${week + 1}`,
-    n: parsed.filter((item) => item.date.year === year && item.date.month === month && Math.min(3, Math.floor((item.date.day - 1) / 7)) === week).length,
-  }));
+function bookingTimestamp(booking) {
+  const activity = Date.parse(booking.updatedAt || booking.createdAt || "");
+  if (Number.isFinite(activity)) return activity;
+  const date = bookingDateValue(booking);
+  return date ? new Date(`${date}T12:00:00`).getTime() : 0;
+}
+
+const RANGE_OPTIONS = { Daily: 7, Weekly: 8, Monthly: 12, "6 months": 6, Yearly: 5 };
+
+/** Creates aligned buckets and aggregates service revenue and appointments for the selected window. */
+function dashboardSeries(bookings, range, now = new Date()) {
+  const quantity = RANGE_OPTIONS[range];
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (range === "Daily") start.setDate(start.getDate() - (quantity - 1));
+  if (range === "Weekly") {
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7) - 7 * (quantity - 1));
+  }
+  if (range === "Monthly" || range === "6 months") start.setDate(1), start.setMonth(start.getMonth() - (quantity - 1));
+  if (range === "Yearly") start.setFullYear(start.getFullYear() - (quantity - 1), 0, 1);
+  const bucketStart = (date) => {
+    const result = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    if (range === "Weekly") result.setDate(result.getDate() - ((result.getDay() + 6) % 7));
+    if (range === "Monthly" || range === "6 months") result.setDate(1);
+    if (range === "Yearly") result.setMonth(0, 1);
+    return result;
+  };
+  const step = (date, amount) => {
+    const result = new Date(date);
+    if (range === "Daily") result.setDate(result.getDate() + amount);
+    if (range === "Weekly") result.setDate(result.getDate() + 7 * amount);
+    if (range === "Monthly" || range === "6 months") result.setMonth(result.getMonth() + amount);
+    if (range === "Yearly") result.setFullYear(result.getFullYear() + amount);
+    return result;
+  };
+  const label = (date) => range === "Daily"
+    ? date.toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+    : range === "Weekly"
+      ? `Wk ${date.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`
+      : range === "Yearly" ? String(date.getFullYear()) : date.toLocaleDateString("en-IN", { month: "short", year: range === "6 months" ? undefined : "2-digit" });
+  const buckets = Array.from({ length: quantity }, (_, index) => {
+    const date = step(start, index);
+    return { date, name: label(date), revenueValue: 0, n: 0 };
+  });
+  const first = buckets[0].date;
+  const last = step(buckets.at(-1).date, 1);
+  bookings.forEach((booking) => {
+    const iso = booking.appointmentDate || bookingDateValue(booking);
+    const date = iso ? new Date(`${iso}T12:00:00`) : null;
+    if (!date || Number.isNaN(date.getTime()) || date < first || date >= last) return;
+    const target = bucketStart(date);
+    const index = range === "Daily" ? Math.round((target - first) / 86400000)
+      : range === "Weekly" ? Math.round((target - first) / (7 * 86400000))
+        : range === "Yearly" ? target.getFullYear() - first.getFullYear()
+          : (target.getFullYear() - first.getFullYear()) * 12 + target.getMonth() - first.getMonth();
+    if (!buckets[index]) return;
+    buckets[index].n += 1;
+    if (booking.status === "Completed") buckets[index].revenueValue += Number(booking.price || 0);
+  });
+  return buckets.map(({ name, revenueValue, n }) => ({ name, revenue: revenueValue / 1000, n }));
 }
 
 /** Returns the matching booking revenue for the current month and previous month. */
@@ -93,25 +135,44 @@ function RevenueChart({ data }) {
     {[40, 95, 150, 205].map((y) => <line key={y} x1="40" x2="560" y1={y} y2={y} className="chart-gridline" />)}
     <polygon points={`50,215 ${points} 550,215`} className="chart-area" />
     <polyline points={points} className="chart-line" />
-    {data.map((point, index) => <g key={point.name}><circle cx={xAt(index)} cy={yAt(point.revenue)} r="4" className="chart-point"><title>{point.name}: ₹{point.revenue.toFixed(1)} thousand completed</title></circle><text x={xAt(index)} y="240" textAnchor="middle" className="chart-label">{point.name}</text></g>)}
+    {data.map((point, index) => <g key={point.name}><circle cx={xAt(index)} cy={yAt(point.revenue)} r="4" className="chart-point"><title>{point.name}: ₹{point.revenue.toFixed(1)} thousand completed</title></circle>{(data.length <= 7 || index % 2 === 0 || index === data.length - 1) && <text x={xAt(index)} y="240" textAnchor="middle" className="chart-label">{point.name}</text>}</g>)}
   </svg>;
 }
 
 /** Draws a lightweight appointment activity chart with native SVG. */
 function ActivityChart({ data }) {
   const max = Math.max(...data.map((point) => point.n), 1);
+  const slot = 420 / data.length;
+  const barWidth = Math.min(44, slot * 0.52);
   return <svg className="lightweight-chart" viewBox="0 0 500 250" role="img" aria-label={`Appointment activity: ${data.map((point) => `${point.name}, ${point.n} bookings`).join(", ")}`}>
     {[40, 95, 150, 205].map((y) => <line key={y} x1="32" x2="480" y1={y} y2={y} className="chart-gridline" />)}
-    {data.map((point, index) => { const height = (point.n / max) * 165; const x = 68 + index * 108; return <g key={point.name}><rect x={x} y={215 - height} width="44" height={height} rx="6" className="chart-bar"><title>{point.name}: {point.n} bookings</title></rect><text x={x + 22} y="240" textAnchor="middle" className="chart-label">{point.name.replace(" ", "\u00a0")}</text></g>; })}
+    {data.map((point, index) => { const height = (point.n / max) * 165; const x = 40 + index * slot + (slot - barWidth) / 2; return <g key={point.name}><rect x={x} y={215 - height} width={barWidth} height={height} rx="6" className="chart-bar"><title>{point.name}: {point.n} bookings</title></rect>{(data.length <= 7 || index % 2 === 0 || index === data.length - 1) && <text x={x + barWidth / 2} y="240" textAnchor="middle" className="chart-label">{point.name.replace(" ", "\u00a0")}</text>}</g>; })}
   </svg>;
 }
 
 /** Shows dealership analytics and supports appointment status updates. */
 export default function Admin() {
-  const { bookings, setBookings, vehicles, services, setServices, notify } = useApp();
-  const [q, setQ] = useState(""),
-    [tab, setTab] = useState("Appointments");
-  const [accounts] = useState(() => getDemoAccounts());
+  const { user } = useAuth();
+  const location = useLocation();
+  const { bookings, setBookings, services, setServices } = useBookings();
+  const { vehicles, setVehicles } = useVehicles();
+  const { notify } = useNotifications();
+  const [q, setQ] = useState("");
+  const sectionNames = { appointments: "Appointments", services: "Services", customers: "Customers", advisors: "Advisors" };
+  const tab = sectionNames[location.pathname.split("/")[2]] || "Overview";
+  const [statusFilter, setStatusFilter] = useState("All statuses");
+  const [serviceFilter, setServiceFilter] = useState("All services");
+  const [dateFilter, setDateFilter] = useState("");
+  const [sort, setSort] = useState("Newest first");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(8);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [timeRange, setTimeRange] = useState("Monthly");
+  const [activityNow, setActivityNow] = useState(Date.now());
+  const [accounts, setAccounts] = useState(() => getDemoAccounts());
+  const [accountToDelete, setAccountToDelete] = useState(null);
+  const [showCreateAdvisor, setShowCreateAdvisor] = useState(false);
+  const [advisorForm, setAdvisorForm] = useState({ name: "", username: "", pin: "", serviceCenterId: "" });
   const [showAddService, setShowAddService] = useState(false);
   const [serviceForm, setServiceForm] = useState({ name: "", category: "Maintenance", price: "", duration: "1 hr", desc: "" });
   const [disabledEmails, setDisabledEmails] = useState(() =>
@@ -121,16 +182,60 @@ export default function Admin() {
   const previousMonthRevenue = monthlyRevenue(bookings, 1);
   const completedCount = bookings.filter((booking) => booking.status === "Completed").length;
   const pendingCount = bookings.filter((booking) => booking.status === "Pending").length;
-  const months = revenueSeries(bookings);
-  const trends = appointmentSeries(bookings);
-  const list = bookings.filter((b) =>
-    `${b.customer} ${b.vehicle} ${b.service} ${b.id}`
-      .toLowerCase()
-      .includes(q.toLowerCase()),
-  ); /** Persists an administrator selected appointment status. */
-  const update = (b, status) => setBookings((current) =>
-    current.map((booking) => (booking.id === b.id ? { ...booking, status } : booking)),
-  );
+  const confirmedCount = bookings.filter((booking) => booking.status === "Confirmed").length;
+  const cancelledCount = bookings.filter((booking) => booking.status === "Cancelled").length;
+  const analytics = dashboardSeries(bookings, timeRange);
+  const filteredBookings = bookings.filter((booking) => {
+    const vehicle = vehicles.find((item) => `${item.brand} ${item.model}` === booking.vehicle);
+    const searchText = `${booking.customer || ""} ${booking.vehicle || ""} ${vehicle?.registration || ""} ${booking.service || ""} ${booking.id || ""}`.toLowerCase();
+    return (statusFilter === "All statuses" || booking.status === statusFilter) &&
+      (serviceFilter === "All services" || booking.service === serviceFilter) &&
+      (!dateFilter || bookingDateValue(booking) === dateFilter) &&
+      searchText.includes(q.toLowerCase());
+  });
+  const sortedBookings = [...filteredBookings].sort((a, b) => {
+    if (sort === "Oldest first") return bookingTimestamp(a) - bookingTimestamp(b);
+    if (sort === "Customer A–Z") return (a.customer || "").localeCompare(b.customer || "");
+    return bookingTimestamp(b) - bookingTimestamp(a);
+  });
+  const pageCount = Math.max(1, Math.ceil(sortedBookings.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const visibleBookings = sortedBookings.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  useEffect(() => {
+    const timer = window.setInterval(() => setActivityNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const recentActivity = [...bookings]
+    .filter((booking) => {
+      const timestamp = Date.parse(booking.updatedAt || booking.createdAt || "");
+      return Number.isFinite(timestamp) && activityNow - timestamp >= 0 && activityNow - timestamp < 6 * 60 * 60 * 1000;
+    })
+    .sort((a, b) => Date.parse(b.updatedAt || b.createdAt) - Date.parse(a.updatedAt || a.createdAt));
+  const exportBookings = () => {
+    const columns = ["Booking ID", "Customer", "Vehicle", "Service", "Service Center", "Appointment Date", "Time", "Estimate (INR)", "Status"];
+    const rows = filteredBookings.map((booking) => [booking.id, booking.customer, booking.vehicle, booking.service, booking.center, booking.date, booking.time, booking.price, booking.status]);
+    const csvCell = (value) => {
+      const text = String(value ?? "");
+      const safeText = /^[\s]*[=+\-@]/.test(text) ? `'${text}` : text;
+      return `"${safeText.replace(/"/g, '""')}"`;
+    };
+    const csv = `\uFEFF${[columns, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n")}`;
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `auto-dealer-service-operations-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    notify(`${filteredBookings.length} service operation${filteredBookings.length === 1 ? "" : "s"} exported to an Excel-compatible CSV.`);
+  };
+  /** Persists an administrator selected appointment status. */
+  const update = (booking, status) => {
+    if (booking.status === status) return;
+    setBookings((current) => current.map((item) => item.id === booking.id
+      ? { ...item, status, updatedAt: new Date().toISOString() }
+      : item));
+    notify(`${booking.id} status updated to ${status}.`);
+  };
   /** Saves a positive service price and lets catalogue consumers react to the state update. */
   const saveServicePrice = (service, price) => {
     if (!Number.isFinite(price) || price < 1) {
@@ -182,20 +287,74 @@ export default function Admin() {
       notify(error.message || "Account access could not be updated.");
     }
   };
+  /** Deletes a customer and their demo records, or clears an advisor from assigned bookings. */
+  const removeAccount = (account) => {
+    const email = account.email.trim().toLowerCase();
+    const name = account.name.trim().toLowerCase();
+    try {
+      deleteDemoAccount(email);
+      setDisabledEmails((current) => current.filter((entry) => entry !== email));
+      setAccounts((current) => current.filter((entry) => entry.email.trim().toLowerCase() !== email));
+      if (account.role === "Customer") {
+        setVehicles((current) => current.filter((vehicle) =>
+          vehicle.ownerEmail
+            ? vehicle.ownerEmail.trim().toLowerCase() !== email
+            : vehicle.ownerName?.trim().toLowerCase() !== name,
+        ));
+        setBookings((current) => current.filter((booking) =>
+          booking.customerEmail
+            ? booking.customerEmail.trim().toLowerCase() !== email
+            : booking.customer?.trim().toLowerCase() !== name,
+        ));
+      } else {
+        setBookings((current) => current.map((booking) =>
+          booking.advisorEmail?.trim().toLowerCase() === email
+            ? { ...booking, advisorEmail: "", advisorName: "" }
+            : booking,
+        ));
+      }
+      setAccountToDelete(null);
+      notify(`${account.role} account deleted from this browser demo.`);
+    } catch (error) {
+      notify(error.message || "The account could not be deleted.");
+    }
+  };
+  const updateAdvisorCenter = (account, serviceCenterId) => {
+    if (!serviceCenterId) return;
+    try {
+      assignAdvisorServiceCenter(account.email, serviceCenterId);
+      setAccounts(getDemoAccounts());
+      notify(`${account.name}'s service center assignment was updated.`);
+    } catch (error) {
+      notify(error.message || "Service center assignment could not be updated.");
+    }
+  };
+  const createAdvisor = async (event) => {
+    event.preventDefault();
+    try {
+      const advisor = await createAdvisorDemoAccount(advisorForm);
+      setAccounts(getDemoAccounts());
+      setAdvisorForm({ name: "", username: "", pin: "", serviceCenterId: "" });
+      setShowCreateAdvisor(false);
+      notify(`Advisor ${advisor.name} created. Share their username and PIN securely.`);
+    } catch (error) {
+      notify(error.message || "The advisor account could not be created.");
+    }
+  };
   const managedAccounts = accounts.filter((account) => account.role === (tab === "Customers" ? "Customer" : "Service Advisor") && `${account.name} ${account.email}`.toLowerCase().includes(q.toLowerCase()));
   return (
     <>
       <PageHead
-        eyebrow="DEALERSHIP OPERATIONS"
-        title="Good morning, team."
-        sub="Here’s how your service network is doing today."
+        eyebrow={tab === "Overview" ? "DEALERSHIP OPERATIONS" : "SERVICE OPERATIONS"}
+        title={tab === "Overview" ? `${getTimeGreeting()}, ${user?.role === "Administrator" ? firstName(user.name) : "team"}.` : tab}
+        sub={tab === "Overview" ? "Here’s how your service network is doing today." : `Manage ${tab.toLowerCase()} across your service network.`}
         action={
           <span className="admin-date">
             <CalendarDays size={15} /> {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </span>
         }
       />
-      <div className="stats-grid admin-stats">
+      {tab === "Overview" && <><div className="stats-grid admin-stats">
         <Stat
           icon={<UserRound />}
           label="Total customers"
@@ -227,6 +386,18 @@ export default function Admin() {
           foot="Needs advisor attention"
         />
         <Stat
+          icon={<CheckCircle2 />}
+          label="Confirmed appointments"
+          value={confirmedCount.toLocaleString("en-IN")}
+          foot="Scheduled with a service center"
+        />
+        <Stat
+          icon={<X />}
+          label="Cancelled appointments"
+          value={cancelledCount.toLocaleString("en-IN")}
+          foot="Cancelled demo bookings"
+        />
+        <Stat
           icon={<span className="rupee">₹</span>}
           label="Revenue this month"
           value={money(revenue)}
@@ -234,54 +405,62 @@ export default function Admin() {
         />
       </div>
       <div className="admin-charts">
+        <div className="admin-analytics-range"><label>Analytics period<select aria-label="Dashboard time range" value={timeRange} onChange={(event) => setTimeRange(event.target.value)}>{Object.keys(RANGE_OPTIONS).map((range) => <option key={range}>{range}</option>)}</select></label></div>
         <section className="dash-panel chart-panel">
           <div className="panel-heading">
             <div>
               <h2>Revenue overview</h2>
-              <p>Monthly service revenue · ₹ thousands</p>
+              <p>{timeRange} completed service revenue · ₹ thousands</p>
             </div>
           </div>
-          <RevenueChart data={months} />
+          <RevenueChart data={analytics} />
         </section>
         <section className="dash-panel chart-panel">
           <div className="panel-heading">
             <div>
               <h2>Appointment activity</h2>
-              <p>Service bookings this month</p>
+              <p>{timeRange} appointment volume</p>
             </div>
           </div>
-          <ActivityChart data={trends} />
+          <ActivityChart data={analytics} />
         </section>
       </div>
-      <section className="dash-panel admin-bookings">
+      </>}
+      {tab !== "Overview" && <section className="dash-panel admin-bookings">
         <div className="panel-heading">
           <div>
-            <h2>Service operations</h2>
-            <p>Review and update recent appointment requests</p>
+            <h2>{tab}</h2>
+            <p>{tab === "Appointments" ? "Review, filter, export, and update appointment requests." : tab === "Services" ? "Manage the service catalogue and pricing." : tab === "Customers" ? "Review customer demo accounts and activity." : "Create advisor logins and assign service centers."}</p>
           </div>
-          <div className="admin-tabs">
-            {["Appointments", "Services", "Customers", "Advisors"].map((t) => (
-              <button
-                className={tab === t ? "active" : ""}
-                onClick={() => setTab(t)}
-                key={t}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+          <button className="table-action export-operations" type="button" onClick={exportBookings}><Download size={15} /> Export Excel (.csv)</button>
         </div>
         {tab === "Appointments" ? (
           <>
             <div className="admin-search">
               <SearchInput
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={(e) => { setQ(e.target.value); setPage(1); }}
                 placeholder="Search by customer, vehicle or booking"
               />
             </div>
-            <div className="table-wrap">
-              <table>
+            <div className="admin-booking-filters">
+              <label className="select-label"><span>Status</span><select aria-label="Filter bookings by status" value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }}>
+                <option>All statuses</option>
+                {[...new Set(bookings.map((booking) => booking.status))].sort().map((status) => <option key={status}>{status}</option>)}
+              </select></label>
+              <label className="select-label"><span>Service</span><select aria-label="Filter bookings by service" value={serviceFilter} onChange={(event) => { setServiceFilter(event.target.value); setPage(1); }}>
+                <option>All services</option>
+                {[...new Set(bookings.map((booking) => booking.service))].sort().map((service) => <option key={service}>{service}</option>)}
+              </select></label>
+              <label className="select-label"><span>Appointment date</span><input aria-label="Filter bookings by date" type="date" value={dateFilter} onChange={(event) => { setDateFilter(event.target.value); setPage(1); }} /></label>
+              <label className="select-label"><span>Sort</span><select aria-label="Sort bookings" value={sort} onChange={(event) => { setSort(event.target.value); setPage(1); }}>
+                <option>Newest first</option><option>Oldest first</option><option>Customer A–Z</option>
+              </select></label>
+              <button className="table-action" type="button" onClick={() => { setQ(""); setStatusFilter("All statuses"); setServiceFilter("All services"); setDateFilter(""); setSort("Newest first"); setPage(1); }}>Clear filters</button>
+            </div>
+            <div className="admin-booking-meta"><span>{sortedBookings.length} matching appointment{sortedBookings.length === 1 ? "" : "s"}</span><label>Rows per page<select aria-label="Bookings per page" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }}><option value={5}>5</option><option value={8}>8</option><option value={12}>12</option></select></label></div>
+            <div className="table-wrap admin-booking-table-wrap" role="region" aria-label="Service booking management" tabIndex={0}>
+              <table className="admin-booking-table">
                 <thead>
                   <tr>
                     <th>BOOKING / CUSTOMER</th>
@@ -290,10 +469,11 @@ export default function Admin() {
                     <th>ESTIMATE</th>
                     <th>STATUS</th>
                     <th>UPDATE</th>
+                    <th>DETAILS</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {list.slice(0, 8).map((b) => (
+                  {visibleBookings.map((b) => (
                     <tr key={b.id}>
                       <td>
                         <b>{b.id}</b>
@@ -327,11 +507,14 @@ export default function Admin() {
                           <option>Cancelled</option>
                         </select>
                       </td>
+                      <td><button className="table-action" type="button" onClick={() => setSelectedBooking(b)}>View</button></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+            {!sortedBookings.length && <p className="account-empty">No appointments match these filters.</p>}
+            {sortedBookings.length > 0 && <div className="pagination admin-booking-pagination"><span>Page {currentPage} of {pageCount}</span><button type="button" aria-label="Previous appointments page" disabled={currentPage === 1} onClick={() => setPage(Math.max(1, currentPage - 1))}><ChevronLeft /></button><button type="button" aria-label="Next appointments page" disabled={currentPage === pageCount} onClick={() => setPage(Math.min(pageCount, currentPage + 1))}><ChevronRight /></button></div>}
           </>
         ) : tab === "Services" ? (
           <>
@@ -360,10 +543,11 @@ export default function Admin() {
                 </form>
             </AccessibleDialog>}
           </>
-        ) : (
+        ) : tab === "Overview" ? null : (
           <div className="customer-list account-management-list">
-            <div className="account-search-row">
+            <div className={`account-search-row ${tab === "Advisors" ? "advisor-account-toolbar" : ""}`}>
               <SearchInput value={q} onChange={(event) => setQ(event.target.value)} placeholder={`Search ${tab.toLowerCase()}`} />
+              {tab === "Advisors" && <button className="btn primary create-advisor-button" type="button" onClick={() => setShowCreateAdvisor(true)}><UserPlus size={16} /> Create advisor</button>}
             </div>
             {managedAccounts.map((account) => {
               const customerBookings = bookings.filter((booking) => booking.customerEmail
@@ -377,17 +561,73 @@ export default function Admin() {
               return (
                 <div key={account.id || account.email}>
                   <span className="avatar">{account.name?.[0] || account.email[0].toUpperCase()}</span>
-                  <span className="account-identity"><b>{account.name}</b><small>{account.email}</small></span>
+                  <span className="account-identity"><b>{account.name}</b><small>{account.username ? `Username: ${account.username}` : account.email}</small></span>
                   <span className="account-activity">{account.role === "Customer" ? `${accountVehicles.length} vehicles · ${customerBookings.length} bookings` : `${advisorJobs.length} assigned appointments`}</span>
+                  {account.role === "Service Advisor" && <label className="advisor-center-assignment">Service center<select aria-label={`Assign service center for ${account.name}`} value={account.serviceCenterId || ""} onChange={(event) => updateAdvisorCenter(account, event.target.value)}><option value="">Choose a center</option>{centers.map((center) => <option key={center.id} value={center.id}>{center.name.replace(/^Auto Dealer\s*[–-]\s*/i, "")}</option>)}</select></label>}
                   <span className={`account-state ${active ? "active" : "inactive"}`}>{active ? "Active" : "Inactive"}</span>
-                  <button className="table-action" type="button" onClick={() => toggleAccount(account)}>{active ? "Deactivate" : "Activate"}</button>
+                  <div className="account-actions">
+                    <button className="table-action" type="button" onClick={() => toggleAccount(account)}>{active ? "Deactivate" : "Activate"}</button>
+                    <button className="table-action account-delete-action" type="button" onClick={() => setAccountToDelete(account)} aria-label={`Delete ${account.name} account`}><Trash2 size={14} /> Delete</button>
+                  </div>
                 </div>
               );
             })}
             {!managedAccounts.length && <p className="account-empty">No {tab.toLowerCase()} demo accounts found.</p>}
           </div>
         )}
-      </section>
+      </section>}
+      {showCreateAdvisor && <AccessibleDialog className="form-modal service-create-modal" labelledBy="create-advisor-title" onClose={() => setShowCreateAdvisor(false)}>
+        <button className="modal-close" type="button" aria-label="Close create advisor form" onClick={() => setShowCreateAdvisor(false)}><X size={18} /></button>
+        <span className="eyebrow">ADVISOR ACCESS · DEMO ONLY</span>
+        <h2 id="create-advisor-title">Create an advisor account</h2>
+        <p>Set a username, numeric PIN, and the service center this advisor will manage.</p>
+        <form className="service-create-form" onSubmit={createAdvisor}>
+          <label>Advisor full name<input autoFocus required maxLength="80" value={advisorForm.name} onChange={(event) => setAdvisorForm((current) => ({ ...current, name: event.target.value }))} placeholder="e.g. Dev Malhotra" /></label>
+          <label>Username<input required minLength="3" maxLength="24" pattern="[A-Za-z0-9._-]{3,24}" autoCapitalize="none" value={advisorForm.username} onChange={(event) => setAdvisorForm((current) => ({ ...current, username: event.target.value }))} placeholder="e.g. dev.malhotra" /></label>
+          <label>Temporary PIN<input required type="password" inputMode="numeric" minLength="4" maxLength="8" pattern="[0-9]{4,8}" autoComplete="new-password" value={advisorForm.pin} onChange={(event) => setAdvisorForm((current) => ({ ...current, pin: event.target.value.replace(/\D/g, "").slice(0, 8) }))} placeholder="4–8 digits" /></label>
+          <label>Assigned service center<select required value={advisorForm.serviceCenterId} onChange={(event) => setAdvisorForm((current) => ({ ...current, serviceCenterId: event.target.value }))}><option value="">Choose a center</option>{centers.map((center) => <option key={center.id} value={center.id}>{center.name}</option>)}</select></label>
+          <p className="demo-advisor-note">The PIN is stored as a salted verifier in this browser demo. This is not production authentication.</p>
+          <div className="service-create-actions"><button className="btn outline" type="button" onClick={() => setShowCreateAdvisor(false)}>Cancel</button><button className="btn primary" type="submit">Create advisor</button></div>
+        </form>
+      </AccessibleDialog>}
+      {accountToDelete && <AccessibleDialog className="form-modal service-create-modal account-delete-dialog" labelledBy="delete-account-title" describedBy="delete-account-description" onClose={() => setAccountToDelete(null)}>
+        <button className="modal-close" type="button" aria-label="Close delete account confirmation" onClick={() => setAccountToDelete(null)}><X size={18} /></button>
+        <span className="eyebrow">DEMO ACCOUNT MANAGEMENT</span>
+        <h2 id="delete-account-title">Delete {accountToDelete.role.toLowerCase()} account?</h2>
+        <p id="delete-account-description">This permanently removes {accountToDelete.name}'s demo login. Customer deletion also removes their vehicles and appointments. Advisor appointments stay in the records with the advisor assignment cleared.</p>
+        <div className="service-create-actions">
+          <button className="btn outline" type="button" onClick={() => setAccountToDelete(null)}>Keep account</button>
+          <button className="btn danger" type="button" onClick={() => removeAccount(accountToDelete)}>Delete account</button>
+        </div>
+      </AccessibleDialog>}
+      {tab === "Overview" && <section className="dash-panel admin-activity-panel">
+        <div className="panel-heading"><div><h2>Recent activity</h2><p>Activity is cleared from this view six hours after it occurs.</p></div><span className="activity-window-label">Last 6 hours</span></div>
+        <div className="table-wrap recent-activity-table-wrap" role="region" aria-label="Recent activity in the last six hours" tabIndex={0}>
+          <table><caption className="sr-only">Recent service booking activity from the last six hours</caption><thead><tr><th scope="col">TIME</th><th scope="col">BOOKING</th><th scope="col">CUSTOMER</th><th scope="col">VEHICLE & SERVICE</th><th scope="col">CENTER</th><th scope="col">STATUS</th></tr></thead>
+            <tbody>{recentActivity.map((booking) => { const timestamp = booking.updatedAt || booking.createdAt; return <tr key={booking.id}>
+              <td><time dateTime={timestamp}>{new Date(timestamp).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</time><small>{booking.updatedAt ? "Status updated" : "Booking created"}</small></td>
+              <td><b>{booking.id}</b></td><td>{booking.customer || "Demo customer"}</td><td><b>{booking.vehicle}</b><small>{booking.service}</small></td><td>{booking.center}</td><td><Status status={booking.status} /></td>
+            </tr>; })}</tbody>
+          </table>
+          {!recentActivity.length && <p className="account-empty">No booking activity in the last six hours.</p>}
+        </div>
+      </section>}
+      {selectedBooking && <AccessibleDialog className="form-modal booking-detail-modal" labelledBy="admin-booking-detail-title" onClose={() => setSelectedBooking(null)}>
+        <button className="modal-close" type="button" aria-label="Close booking details" onClick={() => setSelectedBooking(null)}><X size={18} /></button>
+        <span className="eyebrow">APPOINTMENT DETAILS</span>
+        <h2 id="admin-booking-detail-title">Booking {selectedBooking.id}</h2>
+        <div className="admin-booking-detail-grid">
+          <div><small>CUSTOMER</small><b>{selectedBooking.customer || "Demo customer"}</b></div>
+          <div><small>VEHICLE</small><b>{selectedBooking.vehicle}</b></div>
+          <div><small>SERVICE</small><b>{selectedBooking.service}</b></div>
+          <div><small>APPOINTMENT</small><b>{selectedBooking.date} · {selectedBooking.time}</b></div>
+          <div><small>SERVICE CENTER</small><b>{selectedBooking.center}</b></div>
+          <div><small>ESTIMATE</small><b>{money(selectedBooking.price)}</b></div>
+          <div><small>STATUS</small><Status status={selectedBooking.status} /></div>
+          {selectedBooking.note && <div><small>CUSTOMER NOTE</small><b>{selectedBooking.note}</b></div>}
+        </div>
+        <div className="service-create-actions"><button className="btn primary" type="button" onClick={() => setSelectedBooking(null)}>Done</button></div>
+      </AccessibleDialog>}
     </>
   );
 }

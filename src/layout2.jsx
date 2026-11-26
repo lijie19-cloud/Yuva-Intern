@@ -10,6 +10,7 @@ import {
   ArrowRight,
   Bell,
   CalendarCheck,
+  CalendarDays,
   CarFront,
   Clock3,
   LayoutDashboard,
@@ -19,9 +20,11 @@ import {
   Moon,
   Sun,
   UserRound,
+  Users,
+  Wrench,
   X,
 } from "lucide-react";
-import { bookingsForUser, useApp } from "./state";
+import { bookingsForUser, useAuth, useBookings, useNotifications } from "./state";
 import logo from "./assets/autodealer-wordmark-small.png";
 
 /** Renders a compact brand mark for the selected social network. */
@@ -61,12 +64,15 @@ export function Layout() {
   const headerRef = useRef(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [seenStatuses, setSeenStatuses] = useState({});
-  const { user, setUser, theme, setTheme, bookings } = useApp();
+  const { user, setUser } = useAuth();
+  const { bookings } = useBookings();
+  const { theme, setTheme } = useNotifications();
   const location = useLocation();
   const navigate = useNavigate();
   const dashboard =
     location.pathname.startsWith("/dashboard") ||
-    location.pathname === "/admin" ||
+    location.pathname === "/profile" ||
+    location.pathname.startsWith("/admin") ||
     location.pathname === "/advisor";
   const links = [
     ["Home", "/"],
@@ -80,14 +86,16 @@ export function Layout() {
     ["My vehicles", "/dashboard/vehicles", CarFront],
     ["My bookings", "/dashboard/bookings", CalendarCheck],
     ["Service history", "/dashboard/history", Clock3],
-    ["My profile", "/dashboard/profile", UserRound],
+    ["My profile", "/profile", UserRound],
   ];
   const side =
     user?.role === "Administrator"
-      ? [["Admin overview", "/admin", ShieldCheck]]
+      ? []
       : user?.role === "Service Advisor"
         ? [["Service queue", "/advisor", CalendarCheck]]
         : customerSide;
+  const requestedAdminSection = location.pathname.split("/")[2];
+  const adminSection = ["appointments", "services", "customers", "advisors"].includes(requestedAdminSection) ? requestedAdminSection : null;
   /** Clears the local demo session and returns to the public home page. */
   const logout = () => {
     setUser(null);
@@ -176,6 +184,8 @@ export function Layout() {
             className="brand-logo-image"
             src={logo}
             alt="Auto Dealer vehicle servicing and maintenance"
+            width="150"
+            height="72"
           />
         </Link>
         <button
@@ -332,7 +342,20 @@ export function Layout() {
                   ? "ADVISOR WORKSPACE"
                   : "YOUR GARAGE"}
             </div>
-            {side.map(([name, path, Icon]) => (
+            {user?.role === "Administrator" ? (
+              <>
+                <NavLink to="/admin" end className={adminSection ? "" : "active"} aria-current={!adminSection ? "page" : undefined}>
+                  <ShieldCheck size={18} />Admin overview
+                </NavLink>
+                <div className="sidebar-subheading">SERVICE OPERATIONS</div>
+                <div className="sidebar-submenu" role="group" aria-label="Service operations">
+                  {[["Appointments", "appointments", CalendarDays], ["Services", "services", Wrench], ["Customers", "customers", Users], ["Advisors", "advisors", UserRound]].map(([name, section, Icon]) => {
+                    const active = adminSection === section;
+                    return <NavLink key={section} to={`/admin/${section}`} className={active ? "active" : ""} aria-current={active ? "page" : undefined}><Icon size={17} />{name}</NavLink>;
+                  })}
+                </div>
+              </>
+            ) : side.map(([name, path, Icon]) => (
               <NavLink key={path} end={path === "/dashboard"} to={path}>
                 <Icon size={18} />
                 {name}
@@ -382,6 +405,8 @@ export function Layout() {
                 className="brand-logo-image"
                 src={logo}
                 alt="Auto Dealer vehicle servicing and maintenance"
+                width="180"
+                height="83"
               />
             </Link>
             <p>

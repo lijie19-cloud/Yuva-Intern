@@ -5,16 +5,17 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   font-weight: 400;
-  --navy: #101c2c;
-  --blue: #7c3aed;
+  --navy: #14213d;
+  --blue: #2563eb;
+  --accent: #f97316;
   --muted: #09121f;
   --line: #e2e8f0;
   --bg: #f8fafc;
   --green: #16a34a;
-  --focus-ring: #6d28d9;
-  --card-glow: 0 0 0 1px rgb(124 58 237 / 6%), 0 3px 12px rgb(124 58 237 / 4%);
+  --focus-ring: #1d4ed8;
+  --card-glow: 0 0 0 1px rgb(37 99 235 / 6%), 0 3px 12px rgb(37 99 235 / 4%);
   --card-glow-hover:
-    0 0 0 1px rgb(124 58 237 / 28%), 0 0 18px rgb(124 58 237 / 11%),
+    0 0 0 1px rgb(37 99 235 / 28%), 0 0 18px rgb(37 99 235 / 11%),
     0 8px 22px rgb(15 23 42 / 7%);
 }
 * {
@@ -183,9 +184,9 @@ img {
     border-color 0.18s;
 }
 .theme-toggle:hover {
-  background: #f5f3ff;
+  background: #eff6ff;
   border-color: #b9cff0;
-  color: #6d28d9;
+  color: #1d4ed8;
 }
 .nav-admin {
   font-size: 13px;
@@ -201,8 +202,8 @@ img {
   height: 37px;
   border: none;
   border-radius: 50%;
-  background: #f3e8ff;
-  color: #6d28d9;
+  background: #dbeafe;
+  color: #1d4ed8;
   font-weight: 700;
   display: grid;
   place-items: center;
@@ -229,7 +230,7 @@ img {
     border-color 0.18s;
 }
 .btn:hover {
-  background: #6d28d9;
+  background: #1d4ed8;
   transform: translateY(-1px);
 }
 .btn.large {
@@ -272,17 +273,6 @@ img {
   overflow: hidden;
 }
 
-/* Keep below-the-fold sections out of the initial rendering work where supported. */
-.trust-row,
-.section,
-.how-section,
-.why-section,
-.testimonial,
-.reminder {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 480px;
-}
-
 .hero-copy {
   position: relative;
   z-index: 2;
@@ -323,7 +313,7 @@ img {
 }
 .hero h1 em {
   font-style: normal;
-  color: #a9c8ff;
+  color: var(--accent);
 }
 .hero-copy > p {
   max-width: 445px;
@@ -531,7 +521,7 @@ img {
 }
 .service-card:hover {
   transform: translateY(-3px);
-  border-color: rgb(124 58 237 / 28%);
+  border-color: rgb(37 99 235 / 28%);
   box-shadow: var(--card-glow-hover);
 }
 .service-card > img {
@@ -554,8 +544,8 @@ img {
   display: inline-flex;
   padding: 5px 8px;
   border-radius: 5px;
-  background: #f5f3ff;
-  color: #6d28d9;
+  background: #eff6ff;
+  color: #1d4ed8;
   font-size: 9px;
   font-weight: 700;
 }
@@ -597,7 +587,7 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #6d28d9;
+  color: #1d4ed8;
   font-size: 12px;
   font-weight: 700;
 }
@@ -630,12 +620,12 @@ img {
     box-shadow 0.2s;
 }
 .steps article:hover {
-  border-color: rgb(124 58 237 / 24%);
+  border-color: rgb(37 99 235 / 24%);
   box-shadow: var(--card-glow-hover);
 }
 .steps article > span {
   font: 700 13px Segoe UI;
-  color: #7c3aed;
+  color: #2563eb;
 }
 .steps h3 {
   font: 700 18px Segoe UI;
@@ -663,7 +653,7 @@ img {
     box-shadow 0.2s;
 }
 .center-card:hover {
-  border-color: rgb(124 58 237 / 24%);
+  border-color: rgb(37 99 235 / 24%);
   box-shadow: var(--card-glow-hover);
 }
 .center-cover {
@@ -903,6 +893,61 @@ img {
   gap: 16px;
   margin: 25px 0;
 }
+.vehicle-filter-controls {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.vehicle-results-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -12px 0 18px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.vehicle-results-meta label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.vehicle-results-meta select {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 4px 8px;
+  color: var(--text);
+  background: var(--surface);
+}
+.demo-data-notice {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 13px;
+  margin: 0 0 20px;
+  border: 1px solid #f5c98b;
+  border-radius: 8px;
+  color: #713f12;
+  background: #fff8eb;
+  font-size: 12px;
+}
+.demo-data-notice svg {
+  flex: 0 0 auto;
+}
+.demo-data-notice b {
+  letter-spacing: 0.04em;
+}
+.form-error {
+  margin: 8px 0;
+  color: #b42318;
+  font-size: 12px;
+  line-height: 1.45;
+}
+[aria-invalid="true"] {
+  border-color: #b42318 !important;
+}
 .search {
   height: 43px;
   border: 1px solid #dae1ea;
@@ -1045,7 +1090,7 @@ img {
     box-shadow 0.2s;
 }
 .booking-panel:hover {
-  border-color: rgb(124 58 237 / 24%);
+  border-color: rgb(37 99 235 / 24%);
   box-shadow: var(--card-glow-hover);
 }
 .booking-panel h2 {
@@ -1066,7 +1111,7 @@ img {
 }
 .panel-row svg {
   width: 16px;
-  color: #6d28d9;
+  color: #1d4ed8;
 }
 .panel-row b {
   margin-left: auto;

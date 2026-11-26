@@ -1,4 +1,7 @@
 import React, { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Link,
   useNavigate,
@@ -42,6 +45,48 @@ import {
 } from "./ui";
 /** Formats a numeric service price as Indian rupees. */
 const money = (n) => `₹${Number(n).toLocaleString("en-IN")}`;
+const localDateValue = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+};
+const createBookingSchema = (step) => z.object({
+  vehicle: z.string(),
+  addVehicle: z.boolean(),
+  brand: z.string(),
+  model: z.string(),
+  registration: z.string(),
+  year: z.string(),
+  service: z.string(),
+  center: z.string(),
+  date: z.string(),
+  time: z.string(),
+  advisor: z.string(),
+  note: z.string().max(500, "Keep your note under 500 characters."),
+}).superRefine((values, context) => {
+  const issue = (path, message) => context.addIssue({ code: "custom", path: [path], message });
+  const validateAll = step === 4;
+  if (step === 0 || validateAll) {
+    if (!values.addVehicle && !values.vehicle) issue("vehicle", "Choose a vehicle to continue.");
+    if (values.addVehicle) {
+      if (!values.brand.trim()) issue("brand", "Choose a vehicle manufacturer.");
+      if (!values.model.trim()) issue("model", "Enter the vehicle model.");
+      if (!/^[A-Z]{2}\s?\d{1,2}\s?[A-Z]{1,3}\s?\d{1,4}$/i.test(values.registration.trim())) {
+        issue("registration", "Enter a valid Indian registration number, such as DL 01 AB 1234.");
+      }
+      const year = Number(values.year);
+      if (!Number.isInteger(year) || year < 1990 || year > new Date().getFullYear()) {
+        issue("year", "Enter a valid manufacturing year.");
+      }
+    }
+  }
+  if ((step === 1 || validateAll) && !values.service) issue("service", "Choose a service to continue.");
+  if ((step === 2 || validateAll) && !values.center) issue("center", "Choose a service center.");
+  if (step === 3 || validateAll) {
+    if (!values.date) issue("date", "Choose an appointment date.");
+    else if (values.date < localDateValue()) issue("date", "Choose today or a later date.");
+    if (!values.time) issue("time", "Choose an available time slot.");
+  }
+});
 /** Provides a consistent heading block for app pages. */
 function PageHead({ eyebrow, title, sub, action }) {
   return (
@@ -179,6 +224,9 @@ export function Detail() {
             className="detail-image"
             src={s.image}
             alt={s.name}
+            width="678"
+            height="452"
+            decoding="async"
           />
           <div className="detail-description">
             <span className="eyebrow">{s.category.toUpperCase()}</span>
@@ -254,23 +302,50 @@ const steps = ["Vehicle", "Service", "Center", "Appointment", "Review"];
 /** Runs the validated vehicle-to-confirmation appointment wizard. */
 export function Booking() {
   const [query] = useSearchParams();
+  const navigate = useNavigate();
   const { user, vehicles: allVehicles, setVehicles, bookings, setBookings, services, notify } = useApp();
   const vehicles = vehiclesForUser(allVehicles, user);
   const advisors = getDemoAccounts().filter((account) => account.role === "Service Advisor" && isDemoAccountActive(account.email));
+  const requestedVehicle = query.get("vehicle");
+  const initialVehicle = vehicles.some((item) => item.id === requestedVehicle)
+    ? requestedVehicle
+    : vehicles[0]?.id || "";
   const [step, setStep] = useState(0),
-    [vehicle, setVehicle] = useState(vehicles[0]?.id || ""),
+    [vehicle, setVehicle] = useState(initialVehicle),
     [addVehicle, setAddVehicle] = useState(false),
     [service, setService] = useState(query.get("service") || ""),
     [center, setCenter] = useState(""),
     [date, setDate] = useState(""),
     [time, setTime] = useState(""),
     [advisor, setAdvisor] = useState(""),
-    [note, setNote] = useState(""),
-    [done, setDone] = useState(null);
+    [note, setNote] = useState("");
   const [brand, setBrand] = useState("Royal Enfield"),
     [model, setModel] = useState("Hunter 350"),
     [reg, setReg] = useState(""),
     [year, setYear] = useState("2024");
+  const resolver = useMemo(() => zodResolver(createBookingSchema(step)), [step]);
+  const { register, setValue, setError, clearErrors, formState: { errors } } = useForm({
+    resolver,
+    mode: "onSubmit",
+    defaultValues: {
+      vehicle: initialVehicle,
+      addVehicle: false,
+      brand: "Royal Enfield",
+      model: "Hunter 350",
+      registration: "",
+      year: "2024",
+      service: query.get("service") || "",
+      center: "",
+      date: "",
+      time: "",
+      advisor: "",
+      note: "",
+    },
+  });
+  const formFields = [
+    "vehicle", "addVehicle", "brand", "model", "registration", "year",
+    "service", "center", "date", "time", "advisor", "note",
+  ];
   const selectedVehicle = vehicles.find((v) => v.id === vehicle);
   const selectedService = services.find((s) => s.id === service);
   const slots = [
@@ -282,31 +357,38 @@ export function Booking() {
     "05:00 PM",
   ];
   /** Validates the current booking step before advancing. */
+  const validate = (validationStep) => {
+    clearErrors();
+    const result = createBookingSchema(validationStep).safeParse({
+      vehicle,
+      addVehicle,
+      brand,
+      model,
+      registration: reg,
+      year,
+      service,
+      center,
+      date,
+      time,
+      advisor,
+      note,
+    });
+    if (!result.success) {
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0];
+        if (field) setError(field, { type: "manual", message: issue.message });
+      });
+      return false;
+    }
+    return true;
+  };
   const next = () => {
-    if (step === 0 && !vehicle && !addVehicle) {
-      notify("Choose or add a vehicle to continue.");
-      return;
-    }
-    if (step === 0 && addVehicle && !reg.trim()) {
-      notify("Enter the vehicle registration number.");
-      return;
-    }
-    if (step === 1 && !service) {
-      notify("Select a service to continue.");
-      return;
-    }
-    if (step === 2 && !center) {
-      notify("Select a service center.");
-      return;
-    }
-    if (step === 3 && (!date || !time)) {
-      notify("Choose a date and time slot.");
-      return;
-    }
+    if (!validate(step)) return;
     setStep(step + 1);
   };
   /** Creates the booking record and presents its confirmation reference. */
   const confirm = () => {
+    if (!validate(4)) return;
     let v = selectedVehicle;
     if (addVehicle) {
       v = {
@@ -318,6 +400,11 @@ export function Booking() {
         registration: reg.toUpperCase(),
         year: Number(year),
         cc: 350,
+        fuelType: "Petrol",
+        mileageKm: 0,
+        imageUrl: null,
+        status: "Active",
+        registeredAt: localDateValue(),
         lastService: "Not serviced yet",
         nextDue: "To be scheduled",
       };
@@ -326,8 +413,11 @@ export function Booking() {
     const id = `AD-${Math.floor(2600 + Math.random() * 700)}`;
     const b = {
       id,
+      vehicleId: v?.id,
       vehicle: `${v?.brand || brand} ${v?.model || model}`,
+      serviceId: selectedService.id,
       service: selectedService.name,
+      serviceCenterId: center,
       center: centers
         .find((c) => c.id === center)
         .name.replace("Auto Dealer – ", ""),
@@ -337,8 +427,10 @@ export function Booking() {
         year: "numeric",
       }),
       time,
+      appointmentDate: date,
       price: selectedService.price,
       status: "Confirmed",
+      createdAt: new Date().toISOString(),
       customer: user?.name || "Customer",
       customerEmail: user?.email || "",
       advisorEmail: advisor,
@@ -346,59 +438,9 @@ export function Booking() {
       note,
     };
     setBookings([b, ...bookings]);
-    setDone(b);
     notify("Your appointment is confirmed.");
+    navigate(`/booking-success?booking=${encodeURIComponent(id)}`, { replace: true });
   };
-  if (done)
-    return (
-      <div className="container page confirmation">
-        <div className="confirm-check">
-          <CheckCircle2 size={38} />
-        </div>
-        <span className="eyebrow">YOU'RE ALL SET</span>
-        <h1>Your ride is in good hands.</h1>
-        <p>
-          Your booking is confirmed. We'll send the details and a reminder
-          before your appointment.
-        </p>
-        <div className="confirm-card">
-          <div>
-            <span>BOOKING REFERENCE</span>
-            <b>{done.id}</b>
-          </div>
-          <div>
-            <span>VEHICLE</span>
-            <b>{done.vehicle}</b>
-          </div>
-          <div>
-            <span>SERVICE</span>
-            <b>{done.service}</b>
-          </div>
-          <div>
-            <span>APPOINTMENT</span>
-            <b>
-              {done.date} · {done.time}
-            </b>
-          </div>
-          <div>
-            <span>SERVICE CENTER</span>
-            <b>{done.center}</b>
-          </div>
-          <div>
-            <span>ESTIMATED COST</span>
-            <b>{money(done.price)}</b>
-          </div>
-        </div>
-        <div className="hero-buttons center-buttons">
-          <Link className="btn primary" to="/dashboard/bookings">
-            View my booking <ArrowRight size={16} />
-          </Link>
-          <Link className="btn outline" to="/">
-            Back to home
-          </Link>
-        </div>
-      </div>
-    );
   return (
     <div className="container page booking-page">
       <PageHead
@@ -406,22 +448,29 @@ export function Booking() {
         title="Let's get your ride sorted"
         sub="A few quick details, and we’ll take it from here."
       />
+      <div className="demo-data-notice" role="note"><ShieldCheck size={16} /><span><b>DEMO DATA</b> — bookings are simulated and stored in this browser only.</span></div>
       <div className="progress">
         <div className="progress-track">
           <span style={{ width: `${step * 25}%` }} />
         </div>
-        {steps.map((s, i) => (
-          <div
+        <ol className="progress-steps" aria-label="Booking steps">
+          {steps.map((s, i) => (
+          <li
             key={s}
             className={`progress-step ${i === step ? "active" : ""} ${i < step ? "passed" : ""}`}
+            aria-current={i === step ? "step" : undefined}
           >
             <span>{i < step ? <Check size={15} /> : i + 1}</span>
             <small>{s}</small>
-          </div>
-        ))}
+          </li>
+          ))}
+        </ol>
       </div>
       <div className="wizard-grid">
         <section className="wizard-card">
+          {formFields.map((field) => field === "addVehicle"
+            ? <input key={field} type="checkbox" hidden {...register(field)} />
+            : <input key={field} type="hidden" {...register(field)} />)}
           <span className="eyebrow">STEP {step + 1} OF 5</span>
           <h2>
             {
@@ -440,9 +489,14 @@ export function Booking() {
               {vehicles.map((v) => (
                 <button
                   key={v.id}
+                  type="button"
+                  aria-pressed={vehicle === v.id && !addVehicle}
                   onClick={() => {
                     setVehicle(v.id);
                     setAddVehicle(false);
+                    setValue("vehicle", v.id);
+                    setValue("addVehicle", false);
+                    clearErrors(["vehicle", "registration"]);
                   }}
                   className={`option-card ${vehicle === v.id && !addVehicle ? "selected" : ""}`}
                 >
@@ -459,8 +513,10 @@ export function Booking() {
                 </button>
               ))}
               <button
+                type="button"
                 className={`option-card ${addVehicle ? "selected" : ""}`}
-                onClick={() => setAddVehicle(true)}
+                aria-pressed={addVehicle}
+                onClick={() => { setAddVehicle(true); setValue("addVehicle", true); clearErrors(["vehicle", "registration", "model", "year"]); }}
               >
                 <span className="vehicle-symbol add-symbol">
                   <Plus />
@@ -477,7 +533,7 @@ export function Booking() {
                     Manufacturer
                     <select
                       value={brand}
-                      onChange={(e) => setBrand(e.target.value)}
+                      onChange={(e) => { setBrand(e.target.value); setValue("brand", e.target.value); }}
                     >
                       <option>Royal Enfield</option>
                       <option>Honda</option>
@@ -491,14 +547,16 @@ export function Booking() {
                     Model
                     <input
                       value={model}
-                      onChange={(e) => setModel(e.target.value)}
+                      onChange={(e) => { setModel(e.target.value); setValue("model", e.target.value); clearErrors("model"); }}
                     />
                   </label>
                   <label>
                     Registration number
                     <input
                       value={reg}
-                      onChange={(e) => setReg(e.target.value)}
+                      aria-invalid={Boolean(errors.registration)}
+                      aria-describedby={errors.registration ? "booking-registration-error" : undefined}
+                      onChange={(e) => { setReg(e.target.value); setValue("registration", e.target.value); clearErrors("registration"); }}
                       placeholder="DL 01 AB 1234"
                     />
                   </label>
@@ -507,13 +565,19 @@ export function Booking() {
                     <input
                       type="number"
                       value={year}
-                      onChange={(e) => setYear(e.target.value)}
+                      aria-invalid={Boolean(errors.year)}
+                      aria-describedby={errors.year ? "booking-year-error" : undefined}
+                      onChange={(e) => { setYear(e.target.value); setValue("year", e.target.value); clearErrors("year"); }}
                       min="1990"
                       max="2026"
                     />
                   </label>
                 </div>
               )}
+              {!addVehicle && errors.vehicle && <p className="form-error" role="alert">{errors.vehicle.message}</p>}
+              {addVehicle && errors.registration && <p id="booking-registration-error" className="form-error" role="alert">{errors.registration.message}</p>}
+              {addVehicle && errors.year && <p id="booking-year-error" className="form-error" role="alert">{errors.year.message}</p>}
+              {addVehicle && errors.model && <p className="form-error" role="alert">{errors.model.message}</p>}
             </>
           )}
           {step === 1 && (
@@ -522,9 +586,11 @@ export function Booking() {
               <div className="service-options">
                 {services.map((s) => (
                   <button
+                    type="button"
                     key={s.id}
                     className={`service-option ${service === s.id ? "selected" : ""}`}
-                    onClick={() => setService(s.id)}
+                    aria-pressed={service === s.id}
+                    onClick={() => { setService(s.id); setValue("service", s.id); clearErrors("service"); }}
                   >
                     <span>
                       <b>{s.name}</b>
@@ -537,6 +603,7 @@ export function Booking() {
                   </button>
                 ))}
               </div>
+              {errors.service && <p className="form-error" role="alert">{errors.service.message}</p>}
             </>
           )}
           {step === 2 && (
@@ -544,8 +611,10 @@ export function Booking() {
               <p>Choose the Auto Dealer workshop that works best for you.</p>
               {centers.map((c) => (
                 <button
+                  type="button"
                   key={c.id}
-                  onClick={() => setCenter(c.id)}
+                  aria-pressed={center === c.id}
+                  onClick={() => { setCenter(c.id); setValue("center", c.id); clearErrors("center"); }}
                   className={`center-option ${center === c.id ? "selected" : ""}`}
                 >
                   <span className="center-pin">
@@ -561,6 +630,7 @@ export function Booking() {
                   <span className="radio" />
                 </button>
               ))}
+              {errors.center && <p className="form-error" role="alert">{errors.center.message}</p>}
             </>
           )}
           {step === 3 && (
@@ -573,27 +643,33 @@ export function Booking() {
                 <input
                   type="date"
                   value={date}
-                  min={new Date().toISOString().split("T")[0]}
-                  onChange={(e) => setDate(e.target.value)}
+                  min={localDateValue()}
+                  aria-invalid={Boolean(errors.date)}
+                  aria-describedby={errors.date ? "booking-date-error" : undefined}
+                  onChange={(e) => { setDate(e.target.value); setValue("date", e.target.value); clearErrors("date"); }}
                 />
               </label>
+              {errors.date && <p id="booking-date-error" className="form-error" role="alert">{errors.date.message}</p>}
               <div className="slots-label">AVAILABLE TIME SLOTS</div>
               <div className="slots">
                 {slots.map((t) => (
                   <button
+                    type="button"
                     key={t}
                     className={time === t ? "selected" : ""}
-                    onClick={() => setTime(t)}
+                    aria-pressed={time === t}
+                    onClick={() => { setTime(t); setValue("time", t); clearErrors("time"); }}
                   >
                     {t}
                   </button>
                 ))}
               </div>
+              {errors.time && <p className="form-error" role="alert">{errors.time.message}</p>}
               <label className="field-label">
                 Preferred service advisor
                 <select
                   value={advisor}
-                  onChange={(e) => setAdvisor(e.target.value)}
+                  onChange={(e) => { setAdvisor(e.target.value); setValue("advisor", e.target.value); }}
                 >
                   <option value="">Any available advisor</option>
                   {advisors.map((account) => <option key={account.email} value={account.email}>{account.name}</option>)}
@@ -604,11 +680,14 @@ export function Booking() {
                 <span className="optional">Optional</span>
                 <textarea
                   value={note}
-                  onChange={(e) => setNote(e.target.value)}
+                  aria-invalid={Boolean(errors.note)}
+                  aria-describedby={errors.note ? "booking-note-error" : undefined}
+                  onChange={(e) => { setNote(e.target.value); setValue("note", e.target.value); clearErrors("note"); }}
                   placeholder="Tell us about a sound, issue or request…"
                   rows="3"
                 />
               </label>
+              {errors.note && <p id="booking-note-error" className="form-error" role="alert">{errors.note.message}</p>}
             </>
           )}
           {step === 4 && (
@@ -705,6 +784,37 @@ export function Booking() {
             Need help? <a href="tel:+911143567800">+91 11 4356 7800</a>
           </div>
         </aside>
+      </div>
+    </div>
+  );
+}
+/** Displays a real browser-local booking only after the demo confirmation completed. */
+export function BookingSuccess() {
+  const [query] = useSearchParams();
+  const { user, bookings } = useApp();
+  const bookingId = query.get("booking");
+  const booking = bookingsForUser(bookings, user).find((item) => item.id === bookingId);
+  if (!booking) {
+    return <div className="container page"><Empty title="No confirmed demo booking found" text="Complete the booking steps to see its confirmation details." /></div>;
+  }
+  return (
+    <div className="container page confirmation">
+      <div className="confirm-check"><CheckCircle2 size={38} /></div>
+      <span className="eyebrow">YOU'RE ALL SET</span>
+      <h1>Your ride is in good hands.</h1>
+      <p>Your demo appointment is saved in this browser. It is not a real service reservation.</p>
+      <div className="demo-data-notice" role="note"><ShieldCheck size={16} /><span><b>DEMO DATA</b> — no appointment was sent to a dealership.</span></div>
+      <div className="confirm-card">
+        <div><span>BOOKING REFERENCE</span><b>{booking.id}</b></div>
+        <div><span>VEHICLE</span><b>{booking.vehicle}</b></div>
+        <div><span>SERVICE</span><b>{booking.service}</b></div>
+        <div><span>APPOINTMENT</span><b>{booking.date} · {booking.time}</b></div>
+        <div><span>SERVICE CENTER</span><b>{booking.center}</b></div>
+        <div><span>ESTIMATED COST</span><b>{money(booking.price)}</b></div>
+      </div>
+      <div className="hero-buttons center-buttons">
+        <Link className="btn primary" to="/dashboard/bookings">View my booking <ArrowRight size={16} /></Link>
+        <Link className="btn outline" to="/">Back to home</Link>
       </div>
     </div>
   );
@@ -885,14 +995,48 @@ export function Vehicles() {
       year: "2024",
       cc: "125",
     });
-  const [q, setQ] =
-    useState(""); /** Validates and saves a new or edited vehicle record. */
+  const [q, setQ] = useState("");
+  const [brandFilter, setBrandFilter] = useState("All brands");
+  const [statusFilter, setStatusFilter] = useState("All statuses");
+  const [sort, setSort] = useState("Newest first");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
+  const [formError, setFormError] = useState("");
+  const pageCount = Math.max(1, Math.ceil(
+    vehicles.filter((v) =>
+      (brandFilter === "All brands" || v.brand === brandFilter) &&
+      (statusFilter === "All statuses" || (v.status || "Active") === statusFilter) &&
+      `${v.brand} ${v.model} ${v.registration}`.toLowerCase().includes(q.toLowerCase()),
+    ).length / pageSize,
+  ));
+  const filteredVehicles = vehicles
+    .filter((v) =>
+      (brandFilter === "All brands" || v.brand === brandFilter) &&
+      (statusFilter === "All statuses" || (v.status || "Active") === statusFilter) &&
+      `${v.brand} ${v.model} ${v.registration}`.toLowerCase().includes(q.toLowerCase()),
+    )
+    .sort((a, b) => {
+      if (sort === "Oldest first") return (a.registeredAt || "").localeCompare(b.registeredAt || "");
+      if (sort === "Brand A–Z") return `${a.brand} ${a.model}`.localeCompare(`${b.brand} ${b.model}`);
+      return (b.registeredAt || "").localeCompare(a.registeredAt || "");
+    });
+  const currentPage = Math.min(page, pageCount);
+  const visibleVehicles = filteredVehicles.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
+  /** Validates and saves a new or edited vehicle record. */
   const save = (e) => {
     e.preventDefault();
     if (!form.registration.trim()) {
-      notify("Registration number is required.");
+      setFormError("Registration number is required.");
       return;
     }
+    if (!/^[A-Z]{2}\s?\d{1,2}\s?[A-Z]{1,3}\s?\d{1,4}$/i.test(form.registration.trim())) {
+      setFormError("Enter a valid Indian registration number, such as DL 01 AB 1234.");
+      return;
+    }
+    setFormError("");
     if (editing === "new")
       setVehicles([
         ...allVehicles,
@@ -903,6 +1047,11 @@ export function Vehicles() {
           ownerEmail: user?.email,
           year: +form.year,
           cc: +form.cc,
+          fuelType: "Petrol",
+          mileageKm: 0,
+          imageUrl: null,
+          status: "Active",
+          registeredAt: new Date().toISOString().slice(0, 10),
           lastService: "Not serviced yet",
           nextDue: "To be scheduled",
         },
@@ -940,6 +1089,7 @@ export function Vehicles() {
                 year: "2024",
                 cc: "125",
               });
+              setFormError("");
               setEditing("new");
             }}
           >
@@ -950,12 +1100,41 @@ export function Vehicles() {
       <div className="vehicle-toolbar">
         <SearchInput
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => { setQ(e.target.value); setPage(1); }}
           placeholder="Search your vehicles"
         />
-        <span>
-          {vehicles.length} {vehicles.length === 1 ? "vehicle" : "vehicles"}
-        </span>
+        <div className="vehicle-filter-controls">
+          <label className="select-label">
+            <span>Brand</span>
+            <select aria-label="Filter vehicles by brand" value={brandFilter} onChange={(e) => { setBrandFilter(e.target.value); setPage(1); }}>
+              <option>All brands</option>
+              {[...new Set(vehicles.map((v) => v.brand))].sort().map((brand) => <option key={brand}>{brand}</option>)}
+            </select>
+          </label>
+          <label className="select-label">
+            <span>Status</span>
+            <select aria-label="Filter vehicles by status" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
+              <option>All statuses</option>
+              {[...new Set(vehicles.map((v) => v.status || "Active"))].sort().map((status) => <option key={status}>{status}</option>)}
+            </select>
+          </label>
+          <label className="select-label">
+            <span>Sort</span>
+            <select aria-label="Sort vehicles" value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }}>
+              <option>Newest first</option>
+              <option>Oldest first</option>
+              <option>Brand A–Z</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div className="vehicle-results-meta">
+        <span>{filteredVehicles.length} matching {filteredVehicles.length === 1 ? "vehicle" : "vehicles"} · {vehicles.length} in your garage</span>
+        <label>Rows per page
+          <select aria-label="Vehicles per page" value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
+            <option value={6}>6</option><option value={12}>12</option><option value={24}>24</option>
+          </select>
+        </label>
       </div>
       {editing && (
         <AccessibleDialog className="form-modal" labelledBy="vehicle-dialog-title" onClose={() => setEditing(null)}>
@@ -1001,6 +1180,8 @@ export function Vehicles() {
                     setForm({ ...form, registration: e.target.value })
                   }
                   placeholder="DL 01 AB 1234"
+                  aria-invalid={Boolean(formError)}
+                  aria-describedby={formError ? "vehicle-form-error" : undefined}
                 />
               </label>
               <label>
@@ -1024,6 +1205,7 @@ export function Vehicles() {
                 />
               </label>
             </div>
+            {formError && <p id="vehicle-form-error" className="form-error" role="alert">{formError}</p>}
             <div className="wizard-actions">
               <Button
                 variant="outline"
@@ -1038,16 +1220,10 @@ export function Vehicles() {
         </AccessibleDialog>
       )}
       <div className="vehicle-cards">
-        {vehicles
-          .filter((v) =>
-            `${v.brand} ${v.model} ${v.registration}`
-              .toLowerCase()
-              .includes(q.toLowerCase()),
-          )
-          .map((v) => (
+        {visibleVehicles.map((v) => (
             <article className="garage-card" key={v.id}>
               <div className="garage-photo">
-                <span>🏍️</span>
+                {v.imageUrl ? <img src={v.imageUrl} alt={`${v.brand} ${v.model}`} loading="lazy" decoding="async" /> : <span role="img" aria-label={`${v.brand} ${v.model} motorcycle`}>🏍️</span>}
                 <div className="garage-tag">{v.cc} cc</div>
               </div>
               <div className="garage-info">
@@ -1059,16 +1235,17 @@ export function Vehicles() {
                 <div className="garage-dates">
                   <span>
                     <small>LAST SERVICE</small>
-                    <b>{v.lastService}</b>
+                    <b>{v.lastService || "No service recorded"}</b>
                   </span>
                   <span>
                     <small>NEXT SERVICE DUE</small>
-                    <b>{v.nextDue}</b>
+                    <b>{v.nextDue || "Not scheduled"}</b>
                   </span>
                 </div>
+                <span className={`status ${(v.status || "Active").toLowerCase().replaceAll(" ", "-")}`}>{v.status || "Active"}</span>
                 <div className="garage-actions">
-                  <Link to="/dashboard/history" className="text-link">
-                    Service history <ArrowRight size={14} />
+                  <Link to={`/vehicles/${v.id}`} className="text-link">
+                    Vehicle details <ArrowRight size={14} />
                   </Link>
                   <button
                     onClick={() => {
@@ -1090,13 +1267,80 @@ export function Vehicles() {
             </article>
           ))}
       </div>
+      {filteredVehicles.length > 0 && <div className="pagination vehicle-pagination">
+        <span>Page {currentPage} of {pageCount}</span>
+        <button type="button" onClick={() => setPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1} aria-label="Previous vehicles page"><ChevronLeft /></button>
+        <button type="button" onClick={() => setPage(Math.min(pageCount, currentPage + 1))} disabled={currentPage === pageCount} aria-label="Next vehicles page"><ChevronRight /></button>
+      </div>}
       {!vehicles.length && (
         <Empty
           title="Your garage is ready"
           text="Add your first vehicle to get personalized service reminders."
         />
       )}
+      {vehicles.length > 0 && filteredVehicles.length === 0 && <Empty title="No vehicles match these filters" text="Clear the search or choose another brand or status." />}
     </>
+  );
+}
+/** Shows the selected customer's vehicle facts, upcoming visit, and service records. */
+export function VehicleDetails() {
+  const { id } = useParams();
+  const { user, vehicles: allVehicles, bookings } = useApp();
+  const vehicle = vehiclesForUser(allVehicles, user).find((item) => item.id === id);
+  if (!vehicle) {
+    return <div className="container page"><Empty title="Vehicle not found" text="This vehicle may have been removed from your garage." /></div>;
+  }
+  const vehicleName = `${vehicle.brand} ${vehicle.model}`;
+  const records = historySeed.filter((item) =>
+    item.vehicleId
+      ? item.vehicleId === vehicle.id
+      : item.vehicle === vehicleName && item.ownerName === vehicle.ownerName,
+  );
+  const upcoming = bookingsForUser(bookings, user)
+    .filter((booking) => booking.vehicle === vehicleName && !["Completed", "Cancelled"].includes(booking.status))
+    .slice()
+    .reverse();
+  return (
+    <div className="container page vehicle-detail-page">
+      <Link className="back-link" to="/dashboard/vehicles"><ArrowLeft size={16} /> My vehicles</Link>
+      <PageHead eyebrow="VEHICLE DETAILS" title={vehicleName} sub={`Registered vehicle ${vehicle.registration}`} action={<Link className="btn primary" to={`/book-service?vehicle=${encodeURIComponent(vehicle.id)}`}><CalendarDays size={16} /> Book service</Link>} />
+      <section className="vehicle-detail-hero">
+        <div className="vehicle-detail-image">
+          {vehicle.imageUrl ? <img src={vehicle.imageUrl} alt={`${vehicleName} vehicle`} decoding="async" /> : <span role="img" aria-label={`${vehicleName} motorcycle`}>🏍️</span>}
+        </div>
+        <div className="vehicle-detail-summary">
+          <span className="eyebrow">REGISTRATION NUMBER</span>
+          <h2>{vehicle.registration}</h2>
+          <span className={`status ${(vehicle.status || "Active").toLowerCase().replaceAll(" ", "-")}`}>{vehicle.status || "Active"}</span>
+          <p>Owned by {vehicle.ownerName || user?.name || "Demo customer"}</p>
+          <Link className="text-link" to="/dashboard/vehicles">Manage garage <ArrowRight size={14} /></Link>
+        </div>
+      </section>
+      <section className="vehicle-facts" aria-label="Vehicle information">
+        <article><span>Manufactured</span><strong>{vehicle.year}</strong></article>
+        <article><span>Engine</span><strong>{vehicle.engine || `${vehicle.cc} cc`}</strong></article>
+        <article><span>Fuel type</span><strong>{vehicle.fuelType || "Not provided"}</strong></article>
+        <article><span>Current mileage</span><strong>{Number(vehicle.mileageKm || 0).toLocaleString("en-IN")} km</strong></article>
+        <article><span>Last service</span><strong>{vehicle.lastService || "No service recorded"}</strong></article>
+        <article><span>Next service due</span><strong>{vehicle.nextDue || "Not scheduled"}</strong></article>
+      </section>
+      <section className="dash-panel vehicle-upcoming-panel">
+        <div className="panel-heading"><div><h2>Upcoming service</h2><p>Appointment information linked to this vehicle</p></div></div>
+        {upcoming.length ? upcoming.map((booking) => <article className="vehicle-booking-row" key={booking.id}>
+          <span className="activity-check"><CalendarDays size={15} /></span>
+          <span><b>{booking.service}</b><small>{booking.date} · {booking.time} · {booking.center}</small></span>
+          <Status status={booking.status} />
+        </article>) : <p className="vehicle-detail-empty">No upcoming appointment is booked for this vehicle.</p>}
+      </section>
+      <section className="dash-panel vehicle-history-panel">
+        <div className="panel-heading"><div><h2>Service history</h2><p>Completed work recorded for {vehicleName}</p></div><Link className="text-link" to="/dashboard/history">All service history <ArrowRight size={14} /></Link></div>
+        {records.length ? <div className="vehicle-history-list">{records.map((record) => <article className="vehicle-history-row" key={record.id || `${record.date}-${record.service}`}>
+          <span className="activity-check"><Check size={15} /></span>
+          <span><b>{record.service}</b><small>{record.date} · {record.center}</small><small>{record.note}</small></span>
+          <strong>{money(record.price)}</strong>
+        </article>)}</div> : <p className="vehicle-detail-empty">No previous service records are available for this vehicle.</p>}
+      </section>
+    </div>
   );
 }
 /** Searches and filters appointments and exposes cancellation actions. */
@@ -1121,7 +1365,7 @@ export function Bookings() {
     if (window.confirm(`Cancel booking ${b.id}?`)) {
       setBookings(
         allBookings.map((x) =>
-          x.id === b.id ? { ...x, status: "Cancelled" } : x,
+          x.id === b.id ? { ...x, status: "Cancelled", updatedAt: new Date().toISOString() } : x,
         ),
       );
       notify("Your booking has been cancelled.");

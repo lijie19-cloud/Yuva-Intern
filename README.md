@@ -8,7 +8,7 @@ Auto Dealer is a responsive React application for a fictional two-wheeler dealer
 
 ## Live app
 
- `https://autodealer-ten.vercel.app` 
+ https://autodealer-ten.vercel.app
 
 ## Product features
 
@@ -39,13 +39,24 @@ Auto Dealer is a responsive React application for a fictional two-wheeler dealer
 - Revenue and appointment charts recalculated from the current booking data, including status and date changes.
 - Create catalogue services and update any service price; the shared catalogue updates in the public service pages and booking flow.
 - Searchable appointments with status updates, plus customer and advisor demo-account activity controls.
+- Delete registered customer or advisor accounts from this browser demo with a confirmation step; customer vehicles and appointments are removed, while advisor appointments remain with the advisor assignment cleared.
 - Admin-only navigation and route handling in the demo UI.
 
 ## Responsive design and accessibility
 
+The visual theme uses deep navy (`#14213D`), royal blue (`#2563EB`), and orange (`#F97316`) accents with theme-aware surfaces and contrast in light and dark modes.
+
 The interface includes layouts for phones, compact tablets, tablets, and desktop screens. Mobile layouts use a collapsible header, horizontal dashboard navigation, stacked content panels, two-column compact statistics, a single-column chart layout, and horizontally scrollable data tables. The booking step indicator adapts to narrow screens, and footer content can wrap on small displays.
 
 Pages use semantic landmarks, a keyboard-accessible skip link and navigation menu, labeled forms, visible high-contrast focus indicators, status announcements, and text alternatives for meaningful images. Dialogs support Escape dismissal, focus containment, and focus return. Text and control borders use theme-aware contrast tokens, and mobile inputs retain a readable size without forced browser zoom. Responsive styles are maintained in `src/index.css` and `src/app.css`; theme tokens and dark-mode overrides are in `src/theme.css`.
+
+## Delivery and performance
+
+- The app and service images are self-hosted; no remote font, analytics, or runtime script is required for first render. Maps and social destinations load only after a user follows a link.
+- The original brand wordmark is preserved; 400 px service-card thumbnails reduce bytes on listing and home screens, while detail pages retain their larger images. The home hero is preloaded only on the home route, and below-the-fold images are lazy-loaded and decoded asynchronously.
+- Route screens are lazy-loaded. The shared React/router framework is emitted as a separately cacheable production chunk, while Vite fingerprints JS, CSS, and imported images.
+- Vercel and Netlify rules cache fingerprinted `/assets/*` files for one year as immutable, revalidate the fixed hero image weekly, and revalidate the HTML entry document. Compression, HTTP/2 or HTTP/3, and edge delivery are provided by the selected host/CDN.
+- No image CDN or runtime image optimizer is configured. The supplied JPG assets are already small; responsive AVIF/WebP variants can be added later if image-heavy traffic justifies the extra assets and delivery configuration.
 
 ## Technology
 
@@ -153,7 +164,7 @@ npm run audit:preview # Build and serve on port 4173 for Lighthouse
 npm test             # Run Vitest and React Testing Library tests
 ```
 
-For a production-focused Lighthouse audit, run `npm run audit:preview` and audit `http://localhost:4173`. Vite's development server includes unminified modules and development tooling, so its score does not represent the production build.
+For a production-bundle Lighthouse audit, run `npm run audit:preview` and audit `http://localhost:4173`. Do not use the Vite development URL on port `5173` to judge production network delivery: it serves development modules and does not provide the production host's HTTP/2 or HTTP/3 edge delivery and compression. Audit the deployed Vercel URL for the Modern HTTP insight; the Vercel edge controls that protocol behavior.
 
 ## Tests
 
@@ -181,10 +192,6 @@ The Netlify file `public/_redirects` contains:
 ```
 
 The Vercel rewrite is defined in `vercel.json`. The demo needs no environment variables. A production backend or identity provider will require provider-specific configuration and server-side security rules.
-
-## Screenshots
-
-No screenshots are committed yet. Add reviewed images under `docs/screenshots/` and link them here when available. Useful captures include the home page, service catalogue, booking confirmation, customer dashboard, advisor queue, and admin overview.
 
 ## Known limitations
 

@@ -4,6 +4,80 @@ import brakeInspectionImage from "./assets/optimized/Brake Inspection.jpg";
 import diagnosticsImage from "./assets/optimized/Engine Diagnostics.jpg";
 import batteryCareImage from "./assets/optimized/Battery Care.jpg";
 import detailingImage from "./assets/optimized/Wash & Detailing.jpg";
+import generalServiceThumbnail from "./assets/thumbnails/General Servicing.jpg";
+import oilChangeThumbnail from "./assets/thumbnails/Engine Oil Change.jpg";
+import brakeInspectionThumbnail from "./assets/thumbnails/Brake Inspection.jpg";
+import diagnosticsThumbnail from "./assets/thumbnails/Engine Diagnostics.jpg";
+import batteryCareThumbnail from "./assets/thumbnails/Battery Care.jpg";
+import detailingThumbnail from "./assets/thumbnails/Wash & Detailing.jpg";
+
+/** Fictional demo identities used by the mock API and role demonstrations. */
+export const initialUsers = [
+  {
+    id: "user-1",
+    name: "Aarav Mehta",
+    email: "aarav@example.com",
+    phone: "+91 90000 00001",
+    address: "South Delhi, New Delhi",
+    role: "Customer",
+  },
+  {
+    id: "user-2",
+    name: "Rhea Kapoor",
+    email: "rhea@example.test",
+    phone: "+91 90000 00002",
+    address: "Dwarka, New Delhi",
+    role: "Customer",
+  },
+  {
+    id: "user-3",
+    name: "Kabir Sharma",
+    email: "kabir@example.test",
+    phone: "+91 90000 00003",
+    address: "West Delhi, New Delhi",
+    role: "Customer",
+  },
+  {
+    id: "user-4",
+    name: "Ananya Rao",
+    email: "ananya@example.test",
+    phone: null,
+    address: null,
+    role: "Customer",
+  },
+  {
+    id: "user-5",
+    name: "Dr. Veda Lakshmi Chandrasekaran",
+    email: "veda@example.test",
+    phone: "+91 90000 00005",
+    address: "Karol Bagh, New Delhi",
+    role: "Customer",
+  },
+  {
+    id: "user-6",
+    name: "Mira Sen",
+    email: "mira@example.test",
+    phone: null,
+    address: null,
+    role: "Customer",
+  },
+  {
+    id: "user-advisor-1",
+    name: "Dev Malhotra",
+    email: "advisor@example.test",
+    phone: "+91 90000 00007",
+    address: "New Delhi",
+    role: "Service Advisor",
+  },
+  {
+    id: "user-admin-1",
+    name: "Priya Khanna",
+    email: "admin@example.test",
+    phone: "+91 90000 00008",
+    address: "New Delhi",
+    role: "Administrator",
+  },
+];
 
 export const services = [
   {
@@ -14,6 +88,7 @@ export const services = [
     duration: "2–3 hrs",
     popularity: 98,
     image: generalServiceImage,
+    thumbnail: generalServiceThumbnail,
     desc: "A complete health check and tune-up to keep every ride smooth, safe and dependable.",
     includes: [
       "Engine oil & filter inspection",
@@ -30,6 +105,7 @@ export const services = [
     duration: "45 min",
     popularity: 95,
     image: oilChangeImage,
+    thumbnail: oilChangeThumbnail,
     desc: "Fresh, manufacturer-approved oil for a quieter engine and longer-lasting performance.",
     includes: [
       "Premium grade engine oil",
@@ -46,6 +122,7 @@ export const services = [
     duration: "1 hr",
     popularity: 91,
     image: brakeInspectionImage,
+    thumbnail: brakeInspectionThumbnail,
     desc: "Expert inspection of brake pads, fluid, cables and stopping performance.",
     includes: [
       "Pad and disc inspection",
@@ -62,6 +139,7 @@ export const services = [
     duration: "1–2 hrs",
     popularity: 88,
     image: diagnosticsImage,
+    thumbnail: diagnosticsThumbnail,
     desc: "Pinpoint performance issues with specialist diagnostics and experienced technicians.",
     includes: [
       "Computer diagnostics",
@@ -78,6 +156,7 @@ export const services = [
     duration: "45 min",
     popularity: 82,
     image: batteryCareImage,
+    thumbnail: batteryCareThumbnail,
     desc: "Get dependable starts with a tested battery and charging system.",
     includes: [
       "Battery load test",
@@ -94,6 +173,7 @@ export const services = [
     duration: "1 hr",
     popularity: 78,
     image: brakeInspectionImage,
+    thumbnail: brakeInspectionThumbnail,
     desc: "Improve grip and ride comfort with tyre, pressure and alignment checks.",
     includes: [
       "Tread and pressure check",
@@ -110,6 +190,7 @@ export const services = [
     duration: "1–2 hrs",
     popularity: 73,
     image: diagnosticsImage,
+    thumbnail: diagnosticsThumbnail,
     desc: "Reliable troubleshooting for lights, wiring, ignition and electrical systems.",
     includes: [
       "Wiring inspection",
@@ -126,6 +207,7 @@ export const services = [
     duration: "1.5 hrs",
     popularity: 90,
     image: detailingImage,
+    thumbnail: detailingThumbnail,
     desc: "Bring back that showroom feel with a careful wash and hand-finished detail.",
     includes: [
       "Body-safe foam wash",
@@ -169,6 +251,13 @@ export const initialVehicles = [
     registration: "DL 3S CX 4821",
     year: 2022,
     cc: 349,
+    engine: "349 cc single-cylinder",
+    fuelType: "Petrol",
+    mileageKm: 12400,
+    imageUrl: null,
+    status: "Active",
+    registeredAt: "2022-03-18",
+    ownerEmail: "aarav@example.com",
     lastService: "12 Sep 2026",
     nextDue: "12 Dec 2026",
     ownerName: "Aarav Mehta",
@@ -180,9 +269,55 @@ export const initialVehicles = [
     registration: "DL 8C DA 1028",
     year: 2024,
     cc: 109,
+    engine: "109 cc single-cylinder",
+    fuelType: "Petrol",
+    mileageKm: 6800,
+    imageUrl: null,
+    status: "Active",
+    registeredAt: "2024-06-02",
+    ownerEmail: "aarav@example.com",
     lastService: "04 Aug 2026",
     nextDue: "04 Feb 2027",
     ownerName: "Aarav Mehta",
+  },
+];
+/** Extra edge-case vehicles served by the mock API without changing the fresh-user garage. */
+export const additionalMockVehicles = [
+  {
+    id: "v3",
+    brand: "Yamaha",
+    model: "FZ-S",
+    registration: "DL 9C BX 7821",
+    year: 2023,
+    cc: 149,
+    engine: "149 cc single-cylinder",
+    fuelType: "Petrol",
+    mileageKm: 9200,
+    imageUrl: null,
+    status: "Active",
+    registeredAt: "2023-08-14",
+    ownerEmail: "rhea@example.test",
+    ownerName: "Rhea Kapoor",
+    lastService: "18 May 2026",
+    nextDue: "18 Nov 2026",
+  },
+  {
+    id: "v4",
+    brand: "TVS",
+    model: "Jupiter",
+    registration: "REGISTRATION PENDING",
+    year: 2025,
+    cc: 113,
+    engine: "113 cc single-cylinder",
+    fuelType: "Petrol",
+    mileageKm: 1100,
+    imageUrl: null,
+    status: "Registration pending",
+    registeredAt: "2025-09-03",
+    ownerEmail: "veda@example.test",
+    ownerName: "Dr. Veda Lakshmi Chandrasekaran",
+    lastService: null,
+    nextDue: "03 Mar 2027",
   },
 ];
 export const initialBookings = [
@@ -196,6 +331,7 @@ export const initialBookings = [
     price: 1499,
     status: "Confirmed",
     customer: "Aarav Mehta",
+    customerEmail: "aarav@example.com",
   },
   {
     id: "AD-2594",
@@ -207,6 +343,7 @@ export const initialBookings = [
     price: 799,
     status: "Completed",
     customer: "Aarav Mehta",
+    customerEmail: "aarav@example.com",
   },
   {
     id: "AD-2571",
@@ -218,6 +355,7 @@ export const initialBookings = [
     price: 599,
     status: "Completed",
     customer: "Aarav Mehta",
+    customerEmail: "aarav@example.com",
   },
   {
     id: "AD-2610",
@@ -229,6 +367,7 @@ export const initialBookings = [
     price: 499,
     status: "Pending",
     customer: "Rhea Kapoor",
+    customerEmail: "rhea@example.test",
   },
   {
     id: "AD-2611",
@@ -240,6 +379,7 @@ export const initialBookings = [
     price: 699,
     status: "In Progress",
     customer: "Kabir Sharma",
+    customerEmail: "kabir@example.test",
   },
   {
     id: "AD-2612",
@@ -251,10 +391,34 @@ export const initialBookings = [
     price: 899,
     status: "Cancelled",
     customer: "Ananya Rao",
+    customerEmail: "ananya@example.test",
+  },
+];
+export const initialNotifications = [
+  {
+    id: "notification-1",
+    userId: "user-1",
+    bookingId: "AD-2608",
+    type: "booking-confirmed",
+    message: "Your General Servicing appointment is confirmed.",
+    createdAt: "2026-11-20T08:30:00+05:30",
+    read: false,
+  },
+  {
+    id: "notification-2",
+    userId: "user-2",
+    bookingId: "AD-2610",
+    type: "booking-pending",
+    message: "Your Battery Care request is awaiting confirmation.",
+    createdAt: "2026-11-21T11:15:00+05:30",
+    read: true,
   },
 ];
 export const history = [
   {
+    id: "history-1",
+    userId: "user-1",
+    vehicleId: "v2",
     date: "20 Nov 2026",
     ownerName: "Aarav Mehta",
     vehicle: "Honda Activa 6G",
@@ -265,6 +429,9 @@ export const history = [
     note: "Engine running smoothly. Next service recommended in 6 months.",
   },
   {
+    id: "history-2",
+    userId: "user-1",
+    vehicleId: "v1",
     date: "12 Sep 2026",
     ownerName: "Aarav Mehta",
     vehicle: "Royal Enfield Classic 350",
@@ -275,6 +442,9 @@ export const history = [
     note: "Chain adjusted. Brake pads at 70% life.",
   },
   {
+    id: "history-3",
+    userId: "user-1",
+    vehicleId: "v1",
     date: "02 Oct 2026",
     ownerName: "Aarav Mehta",
     vehicle: "Royal Enfield Classic 350",

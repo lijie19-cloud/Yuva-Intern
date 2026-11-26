@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { useApp } from "./state";
+import { useAuth, useNotifications } from "./state";
 import { Loader } from "./ui";
 import { Layout } from "./layout2";
 import { isDemoAccountActive } from "./services/demoAuth";
@@ -14,11 +14,17 @@ const Detail = lazy(() =>
 const Booking = lazy(() =>
   import("./pages").then((m) => ({ default: m.Booking })),
 );
+const BookingSuccess = lazy(() =>
+  import("./pages").then((m) => ({ default: m.BookingSuccess })),
+);
 const Dashboard = lazy(() =>
   import("./pages").then((m) => ({ default: m.Dashboard })),
 );
 const Vehicles = lazy(() =>
   import("./pages").then((m) => ({ default: m.Vehicles })),
+);
+const VehicleDetails = lazy(() =>
+  import("./pages").then((m) => ({ default: m.VehicleDetails })),
 );
 const Bookings = lazy(() =>
   import("./pages").then((m) => ({ default: m.Bookings })),
@@ -42,7 +48,7 @@ function roleHome(role) {
 
 /** Restricts account routes to signed-in demo users with an allowed account role. */
 function Protected({ children, roles }) {
-  const { user, setUser } = useApp();
+  const { user, setUser } = useAuth();
   const disabled = Boolean(user && user.role !== "Administrator" && !isDemoAccountActive(user.email));
   useEffect(() => {
     if (disabled) setUser(null);
@@ -62,7 +68,7 @@ function Protected({ children, roles }) {
 }
 /** Composes lazy-loaded route screens and displays global toast feedback. */
 export default function App() {
-  const { toast } = useApp();
+  const { toast } = useNotifications();
   const loc = useLocation();
   return (
     <>
@@ -74,11 +80,28 @@ export default function App() {
             <Route path="/our-services" element={<Navigate to="/services" replace />} />
             <Route path="/services/:id" element={<Detail />} />
             <Route path="/book-service" element={<Protected roles={CUSTOMER_ROLES}><Booking /></Protected>} />
+            <Route path="/booking-success" element={<Protected roles={CUSTOMER_ROLES}><BookingSuccess /></Protected>} />
             <Route
               path="/dashboard"
               element={
                 <Protected roles={CUSTOMER_ROLES}>
                   <Dashboard />
+                </Protected>
+              }
+            />
+            <Route
+              path="/vehicles"
+              element={
+                <Protected roles={CUSTOMER_ROLES}>
+                  <Vehicles />
+                </Protected>
+              }
+            />
+            <Route
+              path="/vehicles/:id"
+              element={
+                <Protected roles={CUSTOMER_ROLES}>
+                  <VehicleDetails />
                 </Protected>
               }
             />
@@ -107,6 +130,14 @@ export default function App() {
               }
             />
             <Route
+              path="/profile"
+              element={
+                <Protected roles={CUSTOMER_ROLES}>
+                  <Profile />
+                </Protected>
+              }
+            />
+            <Route
               path="/dashboard/profile"
               element={
                 <Protected roles={CUSTOMER_ROLES}>
@@ -115,7 +146,7 @@ export default function App() {
               }
             />
             <Route
-              path="/admin"
+              path="/admin/*"
               element={
                 <Protected roles={["Administrator"]}>
                   <Admin />

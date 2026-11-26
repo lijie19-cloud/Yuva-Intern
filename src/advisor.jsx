@@ -1,24 +1,55 @@
 import React, { useMemo, useState } from "react";
 import { CalendarCheck, Search } from "lucide-react";
-import { useApp } from "./state";
+import { useAuth, useBookings, useNotifications } from "./state";
 import { Status } from "./ui";
+import { centers } from "./data";
+import { firstName, getTimeGreeting } from "./utils/greeting";
+import { AccessibleDialog } from "./ui";
+import { updateAdvisorPersonalPin } from "./services/demoAuth";
 
 /** Shows service advisors their operational appointment queue without admin analytics or customer account screens. */
 export default function Advisor() {
-  const { user, bookings, setBookings, notify } = useApp();
+  const { user, setUser } = useAuth();
+  const { bookings, setBookings } = useBookings();
+  const { notify } = useNotifications();
   const [query, setQuery] = useState("");
-  const queue = useMemo(() => bookings.filter((booking) =>
-    (!booking.advisorEmail || booking.advisorEmail === user?.email) &&
-    `${booking.id} ${booking.vehicle} ${booking.service} ${booking.center}`.toLowerCase().includes(query.toLowerCase())
-  ), [bookings, query, user?.email]);
+  const [pinForm, setPinForm] = useState({ pin: "", confirmation: "" });
+  const [pinError, setPinError] = useState("");
+  const assignedCenter = centers.find((center) => center.id === user?.serviceCenterId);
+  const assignedCenterName = assignedCenter?.name.replace(/^Auto Dealer\s*[–-]\s*/i, "").toLowerCase();
+  const queue = useMemo(() => bookings.filter((booking) => {
+    const belongsToCenter = Boolean(assignedCenter) && (
+      booking.serviceCenterId
+        ? booking.serviceCenterId === assignedCenter.id
+        : booking.center?.trim().toLowerCase() === assignedCenterName
+    );
+    return belongsToCenter && (!booking.advisorEmail || booking.advisorEmail === user?.email) &&
+      `${booking.id} ${booking.vehicle} ${booking.service} ${booking.center}`.toLowerCase().includes(query.toLowerCase());
+  }), [bookings, query, user?.email, assignedCenter, assignedCenterName]);
   const updateStatus = (id, status) => {
     setBookings((current) => current.map((booking) => booking.id === id ? { ...booking, status } : booking));
     notify("Appointment status updated.");
   };
+  const savePersonalPin = async (event) => {
+    event.preventDefault();
+    setPinError("");
+    if (pinForm.pin !== pinForm.confirmation) {
+      setPinError("The PIN entries do not match.");
+      return;
+    }
+    try {
+      const updatedUser = await updateAdvisorPersonalPin({ username: user.username, pin: pinForm.pin });
+      setUser(updatedUser);
+      setPinForm({ pin: "", confirmation: "" });
+      notify("Your personal PIN has been set.");
+    } catch (error) {
+      setPinError(error.message || "Your personal PIN could not be saved.");
+    }
+  };
   return (
     <>
       <div className="page-head">
-        <div><span className="eyebrow">ADVISOR WORKSPACE</span><h1>Service queue</h1><p>Review appointments and keep each service visit moving.</p></div>
+          <div><span className="eyebrow">ADVISOR WORKSPACE · SERVICE QUEUE</span><h1>{getTimeGreeting()}, {firstName(user?.name)}.</h1><p>{assignedCenter ? `Appointments assigned to ${assignedCenter.name.replace(/^Auto Dealer\s*[–-]\s*/i, "")}.` : "No service center is assigned to this demo advisor account."}</p></div>
       </div>
       <section className="dash-panel advisor-queue">
         <div className="panel-heading">
@@ -38,8 +69,19 @@ export default function Advisor() {
             </tr>)}</tbody>
           </table>
         </div>
-        {!queue.length && <p className="advisor-empty">No appointments match this search.</p>}
+        {!queue.length && <p className="advisor-empty">{assignedCenter ? "No appointments match this search." : "Ask an administrator to assign your service center before viewing appointments."}</p>}
       </section>
+      {user?.mustChangePin && <AccessibleDialog className="form-modal advisor-pin-modal" labelledBy="advisor-pin-title" onClose={() => {}}>
+        <span className="eyebrow">FIRST SIGN-IN SETUP</span>
+        <h2 id="advisor-pin-title">Create your personal PIN</h2>
+        <p>Your administrator's temporary PIN has been used. Set a personal 4–8 digit PIN to continue.</p>
+        <form className="service-create-form" onSubmit={savePersonalPin}>
+          <label>New PIN<input required type="password" inputMode="numeric" pattern="[0-9]{4,8}" minLength={4} maxLength={8} autoComplete="new-password" value={pinForm.pin} onChange={(event) => setPinForm((current) => ({ ...current, pin: event.target.value.replace(/\D/g, "").slice(0, 8) }))} /></label>
+          <label>Confirm new PIN<input required type="password" inputMode="numeric" pattern="[0-9]{4,8}" minLength={4} maxLength={8} autoComplete="new-password" value={pinForm.confirmation} onChange={(event) => setPinForm((current) => ({ ...current, confirmation: event.target.value.replace(/\D/g, "").slice(0, 8) }))} /></label>
+          {pinError && <p className="auth-error" role="alert">{pinError}</p>}
+          <button className="btn primary full" type="submit">Save personal PIN</button>
+        </form>
+      </AccessibleDialog>}
     </>
   );
 }
