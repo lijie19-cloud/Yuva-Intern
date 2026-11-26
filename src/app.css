@@ -1411,8 +1411,8 @@ td > small {
     padding: 38px 30px;
   }
 }
-/* Collapses the public header before tablet widths make desktop navigation cramped. */
-@media (min-width: 681px) and (max-width: 900px) {
+/* Provides one compact, scrollable navigation pattern from tablet through phone widths. */
+@media (max-width: 900px) {
   .nav {
     height: 68px;
   }
@@ -1424,15 +1424,17 @@ td > small {
     place-items: center;
     min-width: 44px;
     min-height: 44px;
+    flex: 0 0 auto;
     border: 0;
     border-radius: 8px;
     background: var(--surface);
     color: var(--text);
+    cursor: pointer;
   }
   .nav-links {
     display: none;
     position: absolute;
-    top: 67px;
+    top: 100%;
     left: 0;
     right: 0;
     padding: 15px 5%;
@@ -1440,20 +1442,78 @@ td > small {
     border-bottom: 1px solid var(--line);
     align-items: stretch;
     gap: 0;
+    max-height: calc(100dvh - 68px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    box-shadow: 0 14px 22px rgb(15 23 42 / 12%);
+    z-index: 20;
   }
   .nav-links.open {
     display: flex;
     flex-direction: column;
   }
   .nav-links > a {
-    padding: 12px 0;
+    display: flex;
+    align-items: center;
+    min-height: 46px;
+    padding: 10px 12px;
     border-bottom: 1px solid var(--line);
+  }
+  .nav-links > a.active {
+    background: var(--surface-muted);
+    border-radius: 7px;
   }
   .mobile-auth {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
     padding-top: 14px;
+    margin-top: 8px;
+    border-top: 1px solid var(--line);
+  }
+  .mobile-auth > a:not(.btn) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 8px;
+  }
+  .dash-layout {
+    display: block;
+  }
+  .sidebar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    gap: 4px;
+    padding: 8px 5%;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 68px;
+    z-index: 5;
+  }
+  .side-heading,
+  .sidebar-bottom {
+    display: none;
+  }
+  .sidebar > a {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 9px 12px;
+    scroll-snap-align: start;
+    white-space: nowrap;
+  }
+  .sidebar > a.active {
+    background: var(--surface-muted);
+  }
+  .dash-main {
+    min-width: 0;
   }
 }
 @media (max-width: 680px) {
@@ -1478,48 +1538,11 @@ td > small {
   .modal-close {
     min-width: 44px;
   }
-  .menu-toggle {
-    min-width: 44px;
-    min-height: 44px;
-    border-radius: 8px;
-  }
   .nav {
-    height: 66px;
-  }
-  .nav-actions {
-    display: none;
-  }
-  .menu-toggle {
-    display: grid;
-    place-items: center;
-    border: 0;
-    background: white;
+    height: 64px;
   }
   .nav-links {
-    display: none;
-    position: absolute;
-    top: 65px;
-    left: 0;
-    right: 0;
-    background: white;
-    padding: 15px 5%;
-    border-bottom: 1px solid var(--line);
-    align-items: stretch;
-    gap: 0;
-  }
-  .nav-links.open {
-    display: flex;
-    flex-direction: column;
-  }
-  .nav-links > a {
-    padding: 12px 0;
-    border-bottom: 1px solid #eff1f4;
-  }
-  .mobile-auth {
-    display: flex;
-    align-items: center;
-    gap: 17px;
-    padding-top: 14px;
+    max-height: calc(100dvh - 64px);
   }
   .hero {
     display: block;
@@ -1672,30 +1695,12 @@ td > small {
   .slots {
     grid-template-columns: repeat(2, 1fr);
   }
-  .dash-layout {
-    display: block;
+  .sidebar > a {
+    font-size: 10px;
+    padding: 9px 10px;
   }
   .sidebar {
-    display: flex;
-    flex-direction: row;
-    overflow-x: auto;
-    gap: 4px;
-    padding: 8px 5%;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-    position: sticky;
-    top: 66px;
-    z-index: 5;
-  }
-  .side-heading,
-  .sidebar-bottom {
-    display: none;
-  }
-  .sidebar > a {
-    flex: 0 0 auto;
-    min-height: 44px;
-    font-size: 10px;
-    padding: 9px;
+    top: 64px;
   }
   .mobile-auth .mobile-logout {
     min-height: 44px;

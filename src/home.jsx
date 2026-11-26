@@ -53,15 +53,53 @@ export function Home() {
       </div></section>
       <section className="section" id="centers">
         <SectionTitle eyebrow="AROUND THE CORNER" title="A better workshop experience">Three convenient locations. One standard of care.</SectionTitle>
-        <div className="center-grid">{centers.map((center) => <article className="center-card" key={center.id}>
-          <div className="center-cover"><MapPin size={22} /><span>{center.rating} <span className="stars">★</span></span></div>
-          <div className="center-body"><h3>{center.name}</h3><p>{center.address}</p><span className="center-contact">{center.phone}</span><Link to="/book-service" className="text-link">Book at this center <ArrowRight size={15} /></Link></div>
-        </article>)}</div>
+        <div className="center-grid">
+          {centers.map((center) => (
+            <article className="center-card" key={center.id}>
+              <div className="center-cover">
+                <MapPin size={22} />
+                <span>
+                  {center.rating} <span className="stars">★</span>
+                </span>
+              </div>
+              <div className="center-body">
+                <h3>{center.name}</h3>
+                <p className="center-address">
+                  <MapPin size={15} aria-hidden="true" />
+                  <span>{center.address}</span>
+                </p>
+                <a
+                  className="text-link center-map-link"
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(center.address)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View location <ArrowRight size={15} />
+                </a>
+                <span className="center-contact">{center.phone}</span>
+                <Link to="/book-service" className="text-link">
+                  Book at this center <ArrowRight size={15} />
+                </Link>
+              </div>
+            </article>
+          ))}
+        </div>
       </section>
       <section className="why-section" id="about">
         <div className="why-image"><img src={workshopMotorcycle} alt="Technician caring for a motorcycle" loading="lazy" decoding="async" /></div>
         <div className="why-copy"><span className="eyebrow">THE AUTO DEALER DIFFERENCE</span><h2>Good service is<br />part of the journey.</h2>
-          <p>We believe vehicle care should feel as dependable as the ride itself. Every visit is backed by trained hands, genuine parts and honest advice.</p>
+          <p>
+            Auto Dealer is a Delhi-based two-wheeler service team built to make
+            motorcycle and scooter care easier to plan and trust. Riders can
+            compare services, choose a nearby workshop, book an appointment and
+            keep their maintenance history in one place.
+          </p>
+          <p>
+            Across our Connaught Place, South Delhi and Dwarka centers,
+            experienced technicians use genuine parts and explain recommendations
+            clearly. From routine servicing to unexpected repairs, we help every
+            rider get back on the road with confidence.
+          </p>
           <ul><li><Check size={17} /> Certified, experienced technicians</li><li><Check size={17} /> Transparent pricing, no surprises</li><li><Check size={17} /> Digital service history for every ride</li><li><Check size={17} /> Genuine parts with service warranty</li></ul>
           <Link className="text-link" to="/services">Discover our approach <ArrowRight size={15} /></Link>
         </div>

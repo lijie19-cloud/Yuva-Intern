@@ -71,6 +71,7 @@ export default function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<Home />} />
             <Route path="/services" element={<Services />} />
+            <Route path="/our-services" element={<Navigate to="/services" replace />} />
             <Route path="/services/:id" element={<Detail />} />
             <Route path="/book-service" element={<Protected roles={CUSTOMER_ROLES}><Booking /></Protected>} />
             <Route

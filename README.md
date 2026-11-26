@@ -167,20 +167,20 @@ The current tests cover key pages and flows as well as mock API behavior. Lighth
 
 ## Deployment
 
-The app builds to a static Vite bundle and can be deployed to Vercel or Netlify:
+The app builds to a static Vite bundle and can be deployed to Vercel or Netlify. SPA fallback rules are included in `vercel.json` and `public/_redirects`, so direct links and refreshes on routes such as `/services` and `/dashboard/bookings` resolve to the React app:
 
 1. Import the repository into the hosting provider.
 2. Set the build command to `npm run build`.
 3. Set the output directory to `dist`.
-4. Configure SPA fallback routing so direct links such as `/dashboard/bookings` serve `index.html`.
+4. Keep the included host configuration files when deploying so direct links such as `/dashboard/bookings` serve `index.html`.
 
-For Netlify, add `public/_redirects` containing:
+The Netlify file `public/_redirects` contains:
 
 ```text
 /* /index.html 200
 ```
 
-For Vercel, configure the project as a Vite SPA or rewrite application routes to `/index.html`. The demo needs no environment variables. A production backend or identity provider will require provider-specific configuration and server-side security rules.
+The Vercel rewrite is defined in `vercel.json`. The demo needs no environment variables. A production backend or identity provider will require provider-specific configuration and server-side security rules.
 
 ## Screenshots
 

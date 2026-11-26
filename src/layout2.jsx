@@ -58,6 +58,7 @@ function SocialIcon({ type }) {
 export function Layout() {
   const [open, setOpen] = useState(false);
   const menuButtonRef = useRef(null);
+  const headerRef = useRef(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [seenStatuses, setSeenStatuses] = useState({});
   const { user, setUser, theme, setTheme, bookings } = useApp();
@@ -71,7 +72,7 @@ export function Layout() {
     ["Home", "/"],
     ["Our Services", "/services"],
     ["Service Centers", "/#centers"],
-    ["My Bookings", "/dashboard/bookings"],
+    ...(!user || user.role === "Customer" ? [["My Bookings", "/dashboard/bookings"]] : []),
     ["About Us", "/#about"],
   ];
   const customerSide = [
@@ -93,6 +94,30 @@ export function Layout() {
     setOpen(false);
     navigate("/");
   };
+  /** Closes compact navigation after route changes and keeps notification state in sync. */
+  useEffect(() => {
+    setOpen(false);
+    setNotificationsOpen(false);
+  }, [location.pathname, location.search, location.hash]);
+  /** Supports outside-click dismissal and Escape dismissal from anywhere in the header. */
+  useEffect(() => {
+    if (!open) return undefined;
+    const handlePointerDown = (event) => {
+      if (!headerRef.current?.contains(event.target)) setOpen(false);
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
   const homePath =
     user?.role === "Administrator"
       ? "/admin"
@@ -145,7 +170,7 @@ export function Layout() {
   return (
     <>
       <a className="skip-link" href="#main-content">Skip to main content</a>
-      <header className="nav">
+      <header className="nav" ref={headerRef}>
         <Link className="brand logo-brand" to="/" aria-label="Auto Dealer home">
           <img
             className="brand-logo-image"
@@ -164,17 +189,42 @@ export function Layout() {
         >
           {open ? <X /> : <Menu />}
         </button>
-        <nav id="primary-navigation" aria-label="Primary navigation" className={`nav-links ${open ? "open" : ""}`} onKeyDown={(event) => {
-          if (event.key === "Escape" && open) {
-            setOpen(false);
-            menuButtonRef.current?.focus();
-          }
-        }}>
-          {links.map(([name, path]) => (
-            <a key={path} href={path} onClick={() => setOpen(false)}>
-              {name}
-            </a>
-          ))}
+        <nav id="primary-navigation" aria-label="Primary navigation" className={`nav-links ${open ? "open" : ""}`}>
+          {links.map(([name, path]) =>
+            path.startsWith("/#") ? (
+              <a
+                key={path}
+                href={path}
+                className={location.pathname === "/" && location.hash === path.slice(1) ? "active" : undefined}
+                aria-current={location.pathname === "/" && location.hash === path.slice(1) ? "location" : undefined}
+                onClick={() => setOpen(false)}
+              >
+                {name}
+              </a>
+            ) : (
+              <Link
+                key={path}
+                to={path}
+                className={
+                  (path === "/"
+                    ? location.pathname === "/" && !location.hash
+                    : location.pathname === path || location.pathname.startsWith(`${path}/`))
+                    ? "active"
+                    : undefined
+                }
+                aria-current={
+                  (path === "/"
+                    ? location.pathname === "/" && !location.hash
+                    : location.pathname === path || location.pathname.startsWith(`${path}/`))
+                    ? "page"
+                    : undefined
+                }
+                onClick={() => setOpen(false)}
+              >
+                {name}
+              </Link>
+            ),
+          )}
           <div className="mobile-auth">
             {themeToggle}
             {user ? (
@@ -204,7 +254,7 @@ export function Layout() {
                     )}
                   </div>
                 )}
-                <Link className="btn primary" to={homePath}>
+                <Link className="btn primary" to={homePath} onClick={() => setOpen(false)}>
                   My account
                 </Link>
                 <button className="mobile-logout" onClick={logout}>
@@ -213,8 +263,8 @@ export function Layout() {
               </>
             ) : (
               <>
-                <Link to="/login">Log in</Link>
-                <Link className="btn primary" to="/register">
+                <Link to="/login" onClick={() => setOpen(false)}>Log in</Link>
+                <Link className="btn primary" to="/register" onClick={() => setOpen(false)}>
                   Get started
                 </Link>
               </>
@@ -274,7 +324,7 @@ export function Layout() {
       </header>
       {dashboard ? (
         <div className="dash-layout">
-          <aside className="sidebar">
+          <nav className="sidebar" aria-label={`${user?.role || "Customer"} workspace navigation`}>
             <div className="side-heading">
               {user?.role === "Administrator"
                 ? "DEALERSHIP"
@@ -310,7 +360,7 @@ export function Layout() {
                 <LogOut size={16} />
               </button>
             </div>
-          </aside>
+          </nav>
           <main className="dash-main" id="main-content" tabIndex={-1}>
             <Outlet />
           </main>
