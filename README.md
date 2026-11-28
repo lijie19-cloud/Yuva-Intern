@@ -8,7 +8,7 @@ Auto Dealer is a responsive React application for a fictional two-wheeler dealer
 
 ## Live app
 
-Listed deployment: [autodealer-ten.vercel.app](https://autodealer-ten.vercel.app) (availability not verified from this workspace).
+Listed deployment: https://auto-dealer-ten.vercel.app/
 
 ## Screenshots
 
