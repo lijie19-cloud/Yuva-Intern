@@ -1447,48 +1447,6 @@ td > small {
   border-radius: 7px;
   background: var(--surface-raised);
 }
-.advisor-queue {
-  min-width: 0;
-}
-.advisor-queue > .panel-heading {
-  align-items: flex-start;
-  flex-wrap: wrap;
-}
-.advisor-search {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  flex: 0 1 320px;
-  min-width: 220px;
-  height: 44px;
-  padding: 0 12px;
-  border: 1px solid var(--control-border, #64748b);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text-muted);
-}
-.advisor-search:focus-within {
-  outline: 3px solid var(--focus-ring, #1d4ed8);
-  outline-offset: 2px;
-}
-.advisor-search input {
-  width: 100%;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-}
-.advisor-search input::placeholder {
-  color: var(--text-muted);
-  opacity: 1;
-}
-.advisor-table-wrap:focus-visible {
-  outline: 3px solid var(--focus-ring, #1d4ed8);
-  outline-offset: 2px;
-}
 .admin-stats {
   grid-template-columns: repeat(3, 1fr);
 }
@@ -1638,23 +1596,6 @@ td > small {
   padding: 4px 0 12px;
   border-bottom: 0;
 }
-.account-management-list .advisor-account-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.advisor-account-toolbar > :first-child {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-.create-advisor-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
 .account-management-list .account-identity {
   min-width: 170px;
 }
@@ -1689,25 +1630,6 @@ td > small {
   color: #64748b;
   font-size: 10px;
 }
-.advisor-center-assignment {
-  display: grid;
-  gap: 4px;
-  min-width: 155px;
-  color: #64748b;
-  font-size: 10px;
-  font-weight: 700;
-}
-.advisor-center-assignment select {
-  width: 100%;
-  min-width: 0;
-  padding: 7px 8px;
-  border: 1px solid #dbe3ee;
-  border-radius: 8px;
-  color: #334155;
-  background: #fff;
-  font: inherit;
-  font-weight: 500;
-}
 .account-state {
   padding: 4px 8px;
   border-radius: 999px;
@@ -1726,15 +1648,6 @@ td > small {
   padding: 16px 0;
   color: #64748b;
   font-size: 12px;
-}
-.demo-advisor-note {
-  margin: 0;
-  padding: 10px;
-  border-radius: 8px;
-  background: #f8fafc;
-  color: #64748b;
-  font-size: 11px;
-  line-height: 1.5;
 }
 .admin-booking-filters {
   display: grid;
@@ -1855,18 +1768,8 @@ td > small {
     flex: 1 1 130px;
     min-width: 0;
   }
-  .account-management-list .advisor-center-assignment {
-    flex: 1 1 100%;
-    min-width: 0;
-  }
   .account-management-list .account-actions {
     margin-left: auto;
-  }
-  .account-management-list .advisor-account-toolbar {
-    flex-wrap: wrap;
-  }
-  .advisor-account-toolbar > :first-child {
-    flex-basis: 240px;
   }
 }
 @media (max-width: 760px) {
@@ -1880,13 +1783,6 @@ td > small {
   }
   .account-management-list > div:not(.account-search-row) {
     flex-wrap: wrap;
-  }
-  .account-management-list .advisor-account-toolbar {
-    align-items: stretch;
-    flex-direction: column;
-  }
-  .create-advisor-button {
-    width: 100%;
   }
   .account-activity {
     min-width: 120px;
@@ -2499,7 +2395,6 @@ td > small {
   }
   .account-management-list > div:not(.account-search-row) > .account-identity,
   .account-management-list > div:not(.account-search-row) > .account-activity,
-  .account-management-list > div:not(.account-search-row) > .advisor-center-assignment,
   .account-management-list > div:not(.account-search-row) > .account-state,
   .account-management-list > div:not(.account-search-row) > .account-actions {
     grid-column: 2;
@@ -2527,10 +2422,6 @@ td > small {
     width: 100%;
     min-width: 0;
   }
-  .advisor-center-assignment {
-    flex: 1 1 100%;
-    min-width: 0;
-  }
   .stat-card {
     min-height: 108px;
     padding: 12px;
@@ -2551,18 +2442,6 @@ td > small {
   .vehicle-toolbar .search {
     width: 100%;
     min-width: 0;
-  }
-  .advisor-queue > .panel-heading {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .advisor-search {
-    width: 100%;
-    min-width: 0;
-    flex-basis: auto;
-  }
-  .advisor-table-wrap {
-    margin-top: 12px;
   }
   .garage-card {
     grid-template-columns: minmax(0, 0.7fr) minmax(0, 1fr);

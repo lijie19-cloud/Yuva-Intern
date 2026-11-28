@@ -2,7 +2,7 @@
 
 ### Vehicle Service Booking & Maintenance Management Platform
 
-Auto Dealer is a responsive React application for a fictional two-wheeler dealership group in Delhi. It brings vehicle records, service booking, maintenance history, customer updates, advisor workflows, and dealership operations into one polished demo experience.
+Auto Dealer is a responsive React application for a fictional two-wheeler dealership group in Delhi. It brings vehicle records, service booking, maintenance history, customer updates, and dealership operations into one polished demo experience.
 
 > **Demo notice:** Sign-in, roles, notifications, and records are stored in the browser. Authentication and role checks are for demonstration only and are not production security.
 
@@ -60,18 +60,13 @@ The screenshot shows Responsive emulation at **300 × 149 px** with **No throttl
 - Maintenance history timeline and profile, password, and notification preference screens.
 - Booking status notifications scoped to the signed-in customer's own records. Opening notifications marks the displayed statuses as seen.
 
-### Service advisor workspace
-
-- Dedicated appointment queue with search and status updates.
-- Advisor-only navigation and route handling in the demo UI.
-
 ### Administrator workspace
 
 - Overview metrics based on the active demo booking and vehicle data.
 - Revenue and appointment charts recalculated from the current booking data, including status and date changes.
 - Create catalogue services and update any service price; the shared catalogue updates in the public service pages and booking flow.
-- Searchable appointments with status updates, plus customer and advisor demo-account activity controls.
-- Delete registered customer or advisor accounts from this browser demo with a confirmation step; customer vehicles and appointments are removed, while advisor appointments remain with the advisor assignment cleared.
+- Searchable appointments with status updates and customer demo-account activity controls.
+- Delete registered customer accounts from this browser demo with a confirmation step; customer vehicles and appointments are removed.
 - Admin-only navigation and route handling in the demo UI.
 
 ## Responsive design and accessibility
@@ -140,7 +135,6 @@ Role checks only control client-side routing and presentation. A user can inspec
 | `/dashboard/bookings` | My bookings | Customer |
 | `/dashboard/history` | Service history | Customer |
 | `/dashboard/profile` | My profile | Customer |
-| `/advisor` | Advisor appointment queue | Service Advisor |
 | `/admin` | Dealership overview and operations | Administrator |
 | `/login` | Sign in | Public |
 | `/register` | Demo registration | Public |
@@ -158,7 +152,6 @@ src/
     demoAuth.js        Browser-local demo registration and sign-in
   App.jsx              Lazy routes and role guards
   admin.jsx            Admin metrics, charts, and operations
-  advisor.jsx          Advisor appointment queue
   auth.jsx             Registration and sign-in screens
   data.js              Seeded services, centers, vehicles, and bookings
   home.jsx             Public home page

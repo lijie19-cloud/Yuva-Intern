@@ -62,14 +62,6 @@ export const initialUsers = [
     role: "Customer",
   },
   {
-    id: "user-advisor-1",
-    name: "Dev Malhotra",
-    email: "advisor@example.test",
-    phone: "+91 90000 00007",
-    address: "New Delhi",
-    role: "Service Advisor",
-  },
-  {
     id: "user-admin-1",
     name: "Priya Khanna",
     email: "admin@example.test",

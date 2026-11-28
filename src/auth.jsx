@@ -3,12 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useApp } from "./state";
 import { Button } from "./ui";
-import { centers, initialBookings, initialVehicles } from "./data";
+import { initialBookings, initialVehicles } from "./data";
 import {
   hasDemoAdministrator,
   hasLegacyAdminSetup,
   registerDemoAccount,
-  signInAdvisorDemoAccount,
   signInDemoAccount,
 } from "./services/demoAuth";
 
@@ -18,7 +17,6 @@ export default function Auth({ register = false }) {
     useApp();
   const navigate = useNavigate();
   const [role, setRole] = useState("Customer");
-  const [loginType, setLoginType] = useState("Customer or administrator");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -50,9 +48,7 @@ export default function Auth({ register = false }) {
     try {
       const account = register
         ? await registerDemoAccount({ ...form, role })
-        : loginType === "Service Advisor"
-          ? await signInAdvisorDemoAccount(form)
-          : await signInDemoAccount(form);
+        : await signInDemoAccount(form);
       const accountName = account.name;
       if (register && account.role !== "Administrator") {
         if (!vehicles.length) setVehicles(initialVehicles.map((vehicle) => ({ ...vehicle, ownerName: accountName, ownerEmail: account.email })));
@@ -67,7 +63,7 @@ export default function Auth({ register = false }) {
       }
       setUser(account);
       notify(`${register ? "Demo account created" : "Signed in"} as ${account.role}.`);
-      navigate(account.role === "Administrator" ? "/admin" : account.role === "Service Advisor" ? "/advisor" : "/dashboard");
+      navigate(account.role === "Administrator" ? "/admin" : "/dashboard");
     } catch (error) {
       setAuthError(error.message || "We couldn't complete sign-in. Please try again.");
     } finally {
@@ -103,9 +99,7 @@ export default function Auth({ register = false }) {
         <p>
           {register
             ? "One account for your vehicles, bookings and service history."
-            : loginType === "Service Advisor"
-              ? "Use the username and PIN provided by your administrator."
-              : "Use the email and password you registered with to access your account."}
+            : "Use the email and password you registered with to access your account."}
         </p>
         {adminOptionLocked && (
           <p className="admin-registered" role="status">
@@ -120,15 +114,6 @@ export default function Auth({ register = false }) {
           </p>
         )}
         <form onSubmit={submit} aria-busy={submitting}>
-          {!register && (
-            <label>
-              Sign-in type
-              <select value={loginType} onChange={(e) => setLoginType(e.target.value)}>
-                <option>Customer or administrator</option>
-                <option>Service Advisor</option>
-              </select>
-            </label>
-          )}
           {register && (
             <label>
               Full name
@@ -141,12 +126,7 @@ export default function Auth({ register = false }) {
               />
             </label>
           )}
-          {!register && loginType === "Service Advisor" ? (
-            <>
-              <label>Advisor username<input required autoComplete="username" autoCapitalize="none" placeholder="e.g. dev.malhotra" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} /></label>
-              <label>Advisor PIN<span className="password-input-wrap"><input required type="password" inputMode="numeric" pattern="[0-9]{4,8}" minLength={4} maxLength={8} autoComplete="off" placeholder="4–8 digit PIN" value={form.pin} onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, "").slice(0, 8) })} /></span></label>
-            </>
-          ) : (
+          {
             <>
               <label>
                 Email address
@@ -183,7 +163,7 @@ export default function Auth({ register = false }) {
             </span>
               </label>
             </>
-          )}
+          }
           {register && (
             <label>
               Confirm password
@@ -221,22 +201,6 @@ export default function Auth({ register = false }) {
                 <option>Customer</option>
                 <option disabled={adminOptionLocked}>Administrator</option>
               </select>
-            </label>
-          )}
-          {register && role === "Service Advisor" && (
-            <label>
-              Assigned service center
-              <select
-                required
-                value={form.serviceCenterId}
-                onChange={(e) => setForm({ ...form, serviceCenterId: e.target.value })}
-              >
-                <option value="">Choose your service center</option>
-                {centers.map((center) => (
-                  <option key={center.id} value={center.id}>{center.name}</option>
-                ))}
-              </select>
-              <small className="field-hint">Your advisor queue will show appointments for this center only. Demo role assignment.</small>
             </label>
           )}
           {authError && (

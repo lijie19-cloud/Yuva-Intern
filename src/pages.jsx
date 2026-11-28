@@ -33,7 +33,6 @@ import {
 } from "lucide-react";
 import { centers, history as historySeed } from "./data";
 import { bookingsForUser, useApp, vehiclesForUser } from "./state";
-import { getDemoAccounts, isDemoAccountActive } from "./services/demoAuth";
 import {
   Button,
   AccessibleDialog,
@@ -60,7 +59,6 @@ const createBookingSchema = (step) => z.object({
   center: z.string(),
   date: z.string(),
   time: z.string(),
-  advisor: z.string(),
   note: z.string().max(500, "Keep your note under 500 characters."),
 }).superRefine((values, context) => {
   const issue = (path, message) => context.addIssue({ code: "custom", path: [path], message });
@@ -305,7 +303,6 @@ export function Booking() {
   const navigate = useNavigate();
   const { user, vehicles: allVehicles, setVehicles, bookings, setBookings, services, notify } = useApp();
   const vehicles = vehiclesForUser(allVehicles, user);
-  const advisors = getDemoAccounts().filter((account) => account.role === "Service Advisor" && isDemoAccountActive(account.email));
   const requestedVehicle = query.get("vehicle");
   const initialVehicle = vehicles.some((item) => item.id === requestedVehicle)
     ? requestedVehicle
@@ -317,7 +314,6 @@ export function Booking() {
     [center, setCenter] = useState(""),
     [date, setDate] = useState(""),
     [time, setTime] = useState(""),
-    [advisor, setAdvisor] = useState(""),
     [note, setNote] = useState("");
   const [brand, setBrand] = useState("Royal Enfield"),
     [model, setModel] = useState("Hunter 350"),
@@ -338,13 +334,12 @@ export function Booking() {
       center: "",
       date: "",
       time: "",
-      advisor: "",
       note: "",
     },
   });
   const formFields = [
     "vehicle", "addVehicle", "brand", "model", "registration", "year",
-    "service", "center", "date", "time", "advisor", "note",
+    "service", "center", "date", "time", "note",
   ];
   const selectedVehicle = vehicles.find((v) => v.id === vehicle);
   const selectedService = services.find((s) => s.id === service);
@@ -370,7 +365,6 @@ export function Booking() {
       center,
       date,
       time,
-      advisor,
       note,
     });
     if (!result.success) {
@@ -433,8 +427,6 @@ export function Booking() {
       createdAt: new Date().toISOString(),
       customer: user?.name || "Customer",
       customerEmail: user?.email || "",
-      advisorEmail: advisor,
-      advisorName: advisors.find((account) => account.email === advisor)?.name || "Any available advisor",
       note,
     };
     setBookings([b, ...bookings]);
@@ -665,16 +657,6 @@ export function Booking() {
                 ))}
               </div>
               {errors.time && <p className="form-error" role="alert">{errors.time.message}</p>}
-              <label className="field-label">
-                Preferred service advisor
-                <select
-                  value={advisor}
-                  onChange={(e) => { setAdvisor(e.target.value); setValue("advisor", e.target.value); }}
-                >
-                  <option value="">Any available advisor</option>
-                  {advisors.map((account) => <option key={account.email} value={account.email}>{account.name}</option>)}
-                </select>
-              </label>
               <label className="field-label">
                 Anything we should know?{" "}
                 <span className="optional">Optional</span>

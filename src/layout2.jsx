@@ -72,8 +72,7 @@ export function Layout() {
   const dashboard =
     location.pathname.startsWith("/dashboard") ||
     location.pathname === "/profile" ||
-    location.pathname.startsWith("/admin") ||
-    location.pathname === "/advisor";
+    location.pathname.startsWith("/admin");
   const links = [
     ["Home", "/"],
     ["Our Services", "/services"],
@@ -88,14 +87,9 @@ export function Layout() {
     ["Service history", "/dashboard/history", Clock3],
     ["My profile", "/profile", UserRound],
   ];
-  const side =
-    user?.role === "Administrator"
-      ? []
-      : user?.role === "Service Advisor"
-        ? [["Service queue", "/advisor", CalendarCheck]]
-        : customerSide;
+  const side = user?.role === "Administrator" ? [] : customerSide;
   const requestedAdminSection = location.pathname.split("/")[2];
-  const adminSection = ["appointments", "services", "customers", "advisors"].includes(requestedAdminSection) ? requestedAdminSection : null;
+  const adminSection = ["appointments", "services", "customers"].includes(requestedAdminSection) ? requestedAdminSection : null;
   /** Clears the local demo session and returns to the public home page. */
   const logout = () => {
     setUser(null);
@@ -126,12 +120,7 @@ export function Layout() {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [open]);
-  const homePath =
-    user?.role === "Administrator"
-      ? "/admin"
-      : user?.role === "Service Advisor"
-        ? "/advisor"
-        : "/dashboard";
+  const homePath = user?.role === "Administrator" ? "/admin" : "/dashboard";
   // Name-only matching is reserved for legacy seeded records; new records use email ownership.
   const customerBookings = bookingsForUser(bookings, user);
   const serviceNotifications = customerBookings.slice(0, 5);
@@ -309,11 +298,7 @@ export function Layout() {
                 </div>
               )}
               <Link className="nav-admin" to={homePath}>
-                {user.role === "Administrator"
-                  ? "Admin"
-                  : user.role === "Service Advisor"
-                    ? "Advisor account"
-                    : "My Garage"}{" "}
+                {user.role === "Administrator" ? "Admin" : "My Garage"}{" "}
                 <ArrowRight size={15} />
               </Link>
               <button className="logout-btn" onClick={logout}>
@@ -336,11 +321,7 @@ export function Layout() {
         <div className="dash-layout">
           <nav className="sidebar" aria-label={`${user?.role || "Customer"} workspace navigation`}>
             <div className="side-heading">
-              {user?.role === "Administrator"
-                ? "DEALERSHIP"
-                : user?.role === "Service Advisor"
-                  ? "ADVISOR WORKSPACE"
-                  : "YOUR GARAGE"}
+              {user?.role === "Administrator" ? "DEALERSHIP" : "YOUR GARAGE"}
             </div>
             {user?.role === "Administrator" ? (
               <>
@@ -349,7 +330,7 @@ export function Layout() {
                 </NavLink>
                 <div className="sidebar-subheading">SERVICE OPERATIONS</div>
                 <div className="sidebar-submenu" role="group" aria-label="Service operations">
-                  {[["Appointments", "appointments", CalendarDays], ["Services", "services", Wrench], ["Customers", "customers", Users], ["Advisors", "advisors", UserRound]].map(([name, section, Icon]) => {
+                  {[["Appointments", "appointments", CalendarDays], ["Services", "services", Wrench], ["Customers", "customers", Users]].map(([name, section, Icon]) => {
                     const active = adminSection === section;
                     return <NavLink key={section} to={`/admin/${section}`} className={active ? "active" : ""} aria-current={active ? "page" : undefined}><Icon size={17} />{name}</NavLink>;
                   })}
@@ -372,11 +353,7 @@ export function Layout() {
               <span>
                 <b>{user?.name || "Guest rider"}</b>
                 <small>
-                  {user?.role === "Administrator"
-                    ? "Admin workspace"
-                    : user?.role === "Service Advisor"
-                      ? "Advisor workspace"
-                      : "Customer account"}
+                  {user?.role === "Administrator" ? "Admin workspace" : "Customer account"}
                 </small>
               </span>
               <button aria-label="Log out" onClick={logout}>

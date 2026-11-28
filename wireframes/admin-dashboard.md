@@ -3,7 +3,7 @@
 Service operations open as separate pages; see `admin-service-operations.md`.
 
 ## Desktop layout
-- Shared header and dashboard shell. Sidebar has **Admin overview**, then a **SERVICE OPERATIONS** group linking to Appointments, Services, Customers, and Advisors. The selected link uses the same active background style as Admin overview.
+- Shared header and dashboard shell. Sidebar has **Admin overview**, then a **SERVICE OPERATIONS** group linking to Appointments, Services, and Customers. The selected link uses the same active background style as Admin overview.
 - Overview heading greets the administrator by local time and first name; current date appears alongside it.
 - Summary cards show customers, registered vehicles, appointments, completed services, pending/awaiting confirmation, confirmed, cancelled, and revenue this month.
 - Analytics period selector: Daily, Weekly, Monthly, 6 months, Yearly. Revenue overview and appointment activity charts use the selected period.

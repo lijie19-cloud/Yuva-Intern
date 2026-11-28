@@ -191,24 +191,11 @@ textarea,
   border-color: var(--control-border);
 }
 
-.advisor-search
-  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
-  border: 0;
-  background: transparent;
-}
-
 html[data-theme="dark"]
   input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
 html[data-theme="dark"] select,
 html[data-theme="dark"] textarea {
   border-color: var(--control-border);
-}
-
-html[data-theme="dark"]
-  .advisor-search
-  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
-  border: 0;
-  background: transparent;
 }
 
 html[data-theme="dark"] .search,

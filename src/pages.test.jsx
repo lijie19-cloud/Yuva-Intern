@@ -6,7 +6,6 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { AppProvider } from "./state";
 import { Services, Booking, BookingSuccess, VehicleDetails, Vehicles } from "./pages";
 import Admin from "./admin";
-import Advisor from "./advisor";
 import Auth from "./auth";
 import Profile from "./profile";
 import App from "./App";
@@ -257,47 +256,6 @@ describe("Auto Dealer primary flows", () => {
       );
     });
   });
-  it("does not offer public service advisor registration", () => {
-    wrap(<Auth register />, "/register");
-    expect(screen.queryByRole("option", { name: "Service Advisor" })).not.toBeInTheDocument();
-  });
-  it("lets an admin create an advisor who signs in with the assigned username and PIN", async () => {
-    localStorage.setItem("ad-user", JSON.stringify({ name: "Priya Khanna", email: "priya@example.test", role: "Administrator" }));
-    const adminView = wrap(<Admin />, "/admin/advisors");
-    fireEvent.click(screen.getByRole("button", { name: /create advisor/i }));
-    fireEvent.change(screen.getByLabelText("Advisor full name"), { target: { value: "Dev Malhotra" } });
-    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "dev.malhotra" } });
-    fireEvent.change(screen.getByLabelText("Temporary PIN"), { target: { value: "4826" } });
-    fireEvent.change(screen.getByLabelText("Assigned service center"), { target: { value: "dwarka" } });
-    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Create advisor" }));
-    await waitFor(() => {
-      expect(JSON.parse(localStorage.getItem("ad-demo-accounts"))[0]).toMatchObject({
-        username: "dev.malhotra", role: "Service Advisor", serviceCenterId: "dwarka",
-      });
-    });
-    expect(JSON.parse(localStorage.getItem("ad-demo-accounts"))[0].credential.hash).not.toBe("4826");
-    adminView.unmount();
-    localStorage.removeItem("ad-user");
-    const loginView = render(<MemoryRouter initialEntries={["/login"]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><AppProvider><Auth /></AppProvider></MemoryRouter>);
-    fireEvent.change(screen.getByLabelText("Sign-in type"), { target: { value: "Service Advisor" } });
-    fireEvent.change(screen.getByLabelText("Advisor username"), { target: { value: "dev.malhotra" } });
-    fireEvent.change(screen.getByLabelText("Advisor PIN"), { target: { value: "4826" } });
-    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
-    await waitFor(() => expect(JSON.parse(localStorage.getItem("ad-user"))).toMatchObject({
-      role: "Service Advisor", username: "dev.malhotra", serviceCenterId: "dwarka", mustChangePin: true,
-    }));
-    loginView.unmount();
-    render(<AppProvider><Advisor /></AppProvider>);
-    expect(screen.getByRole("dialog", { name: "Create your personal PIN" })).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("New PIN"), { target: { value: "7391" } });
-    fireEvent.change(screen.getByLabelText("Confirm new PIN"), { target: { value: "7391" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save personal PIN" }));
-    await waitFor(() => {
-      expect(JSON.parse(localStorage.getItem("ad-demo-accounts"))[0].mustChangePin).toBe(false);
-      expect(JSON.parse(localStorage.getItem("ad-user")).mustChangePin).toBe(false);
-    });
-    expect(screen.queryByRole("dialog", { name: "Create your personal PIN" })).not.toBeInTheDocument();
-  });
   it("verifies registered demo passwords and rejects incorrect credentials", async () => {
     const registration = wrap(<Auth register />, "/register");
     fireEvent.change(screen.getByLabelText("Full name"), {
@@ -352,9 +310,9 @@ describe("Auto Dealer primary flows", () => {
     );
     wrap(<App />, "/admin");
     expect(
-      await screen.findByRole("heading", { name: "Good morning, Maya." }),
+      await screen.findByRole("heading", { name: /^Good (morning|afternoon|evening), Maya\.$/ }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Good morning, team." })).toBeNull();
+    expect(screen.queryByRole("heading", { name: /^Good (morning|afternoon|evening), team\.$/ })).toBeNull();
   });
   it("renders the admin account overview without an icon runtime error", () => {
     localStorage.setItem("ad-user", JSON.stringify({ name: "Priya Khanna", email: "priya@example.test", role: "Administrator" }));
@@ -388,13 +346,6 @@ describe("Auto Dealer primary flows", () => {
     const activityRegion = within(screen.getByRole("region", { name: "Recent activity in the last six hours" }));
     expect(activityRegion.getByText("AD-RECENT")).toBeInTheDocument();
     expect(activityRegion.queryByText("AD-OLD")).not.toBeInTheDocument();
-  });
-  it("lets an admin assign an existing advisor to a service center", () => {
-    localStorage.setItem("ad-demo-accounts", JSON.stringify([{ id: "advisor-1", name: "Dev Malhotra", email: "dev@example.test", role: "Service Advisor" }]));
-    wrap(<Admin />, "/admin/advisors");
-    fireEvent.change(screen.getByRole("combobox", { name: "Assign service center for Dev Malhotra" }), { target: { value: "dwarka" } });
-    expect(JSON.parse(localStorage.getItem("ad-demo-accounts"))[0].serviceCenterId).toBe("dwarka");
-    expect(screen.getByRole("combobox", { name: "Assign service center for Dev Malhotra" })).toHaveValue("dwarka");
   });
   it("filters admin appointments by status, service, and appointment date", () => {
     wrap(<Admin />, "/admin/appointments");

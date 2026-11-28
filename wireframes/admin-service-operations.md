@@ -20,11 +20,6 @@ All sections use the shared admin shell and the `/admin` sidebar. Each operation
 - Delete opens a confirmation dialog. Confirming removes the demo customer account and its associated vehicles/bookings; cancelling preserves it.
 - No-match and no-account states use explicit empty messages.
 
-## Advisors — `/admin/advisors`
-- Searchable advisor list shows name, username, assigned appointment count, center assignment, active state, and account actions.
-- Center selector changes the advisor’s assigned service center.
-- **Create advisor** opens a dialog for full name, username, temporary numeric PIN, and required service center. New accounts are demo-only.
-- Deactivation/reactivation changes demo account availability. Delete requires confirmation and clears advisor assignment from existing appointment records while retaining the bookings.
 
 ## Responsive and accessibility behavior
 - Controls wrap in logical order; appointment table can scroll horizontally without page-level overflow.

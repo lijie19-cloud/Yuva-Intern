@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { CalendarDays, CarFront, CheckCircle2, Clock3, Plus, UserRound, X, ChevronLeft, ChevronRight, Download, UserPlus, Trash2 } from "lucide-react";
+import { CalendarDays, CarFront, CheckCircle2, Clock3, Plus, UserRound, X, ChevronLeft, ChevronRight, Download, Trash2 } from "lucide-react";
 import { useAuth, useBookings, useNotifications, useVehicles } from "./state";
-import { assignAdvisorServiceCenter, createAdvisorDemoAccount, deleteDemoAccount, getDemoAccounts, isDemoAccountActive, setDemoAccountActive } from "./services/demoAuth";
+import { deleteDemoAccount, getDemoAccounts, isDemoAccountActive, setDemoAccountActive } from "./services/demoAuth";
 import { AccessibleDialog, Status, SearchInput } from "./ui";
-import { centers } from "./data";
 import { firstName, getTimeGreeting } from "./utils/greeting";
 
 /** Formats a numeric service price as Indian rupees. */
@@ -158,7 +157,7 @@ export default function Admin() {
   const { vehicles, setVehicles } = useVehicles();
   const { notify } = useNotifications();
   const [q, setQ] = useState("");
-  const sectionNames = { appointments: "Appointments", services: "Services", customers: "Customers", advisors: "Advisors" };
+  const sectionNames = { appointments: "Appointments", services: "Services", customers: "Customers" };
   const tab = sectionNames[location.pathname.split("/")[2]] || "Overview";
   const [statusFilter, setStatusFilter] = useState("All statuses");
   const [serviceFilter, setServiceFilter] = useState("All services");
@@ -171,8 +170,6 @@ export default function Admin() {
   const [activityNow, setActivityNow] = useState(Date.now());
   const [accounts, setAccounts] = useState(() => getDemoAccounts());
   const [accountToDelete, setAccountToDelete] = useState(null);
-  const [showCreateAdvisor, setShowCreateAdvisor] = useState(false);
-  const [advisorForm, setAdvisorForm] = useState({ name: "", username: "", pin: "", serviceCenterId: "" });
   const [showAddService, setShowAddService] = useState(false);
   const [serviceForm, setServiceForm] = useState({ name: "", category: "Maintenance", price: "", duration: "1 hr", desc: "" });
   const [disabledEmails, setDisabledEmails] = useState(() =>
@@ -275,7 +272,7 @@ export default function Admin() {
     setShowAddService(false);
     notify(`${name} added to the service catalogue.`);
   };
-  /** Confirms account deactivation and persists customer/advisor access changes. */
+  /** Confirms account deactivation and persists customer access changes. */
   const toggleAccount = (account) => {
     const active = disabledEmails.includes(account.email);
     if (!active && !window.confirm(`Deactivate ${account.name}'s ${account.role.toLowerCase()} account?`)) return;
@@ -287,7 +284,7 @@ export default function Admin() {
       notify(error.message || "Account access could not be updated.");
     }
   };
-  /** Deletes a customer and their demo records, or clears an advisor from assigned bookings. */
+  /** Deletes a customer and their demo records. */
   const removeAccount = (account) => {
     const email = account.email.trim().toLowerCase();
     const name = account.name.trim().toLowerCase();
@@ -306,12 +303,6 @@ export default function Admin() {
             ? booking.customerEmail.trim().toLowerCase() !== email
             : booking.customer?.trim().toLowerCase() !== name,
         ));
-      } else {
-        setBookings((current) => current.map((booking) =>
-          booking.advisorEmail?.trim().toLowerCase() === email
-            ? { ...booking, advisorEmail: "", advisorName: "" }
-            : booking,
-        ));
       }
       setAccountToDelete(null);
       notify(`${account.role} account deleted from this browser demo.`);
@@ -319,29 +310,7 @@ export default function Admin() {
       notify(error.message || "The account could not be deleted.");
     }
   };
-  const updateAdvisorCenter = (account, serviceCenterId) => {
-    if (!serviceCenterId) return;
-    try {
-      assignAdvisorServiceCenter(account.email, serviceCenterId);
-      setAccounts(getDemoAccounts());
-      notify(`${account.name}'s service center assignment was updated.`);
-    } catch (error) {
-      notify(error.message || "Service center assignment could not be updated.");
-    }
-  };
-  const createAdvisor = async (event) => {
-    event.preventDefault();
-    try {
-      const advisor = await createAdvisorDemoAccount(advisorForm);
-      setAccounts(getDemoAccounts());
-      setAdvisorForm({ name: "", username: "", pin: "", serviceCenterId: "" });
-      setShowCreateAdvisor(false);
-      notify(`Advisor ${advisor.name} created. Share their username and PIN securely.`);
-    } catch (error) {
-      notify(error.message || "The advisor account could not be created.");
-    }
-  };
-  const managedAccounts = accounts.filter((account) => account.role === (tab === "Customers" ? "Customer" : "Service Advisor") && `${account.name} ${account.email}`.toLowerCase().includes(q.toLowerCase()));
+  const managedAccounts = accounts.filter((account) => account.role === "Customer" && `${account.name} ${account.email}`.toLowerCase().includes(q.toLowerCase()));
   return (
     <>
       <PageHead
@@ -383,7 +352,7 @@ export default function Admin() {
           icon={<Clock3 />}
           label="Awaiting confirmation"
           value={pendingCount.toLocaleString("en-IN")}
-          foot="Needs advisor attention"
+          foot="Awaiting service confirmation"
         />
         <Stat
           icon={<CheckCircle2 />}
@@ -430,7 +399,7 @@ export default function Admin() {
         <div className="panel-heading">
           <div>
             <h2>{tab}</h2>
-            <p>{tab === "Appointments" ? "Review, filter, export, and update appointment requests." : tab === "Services" ? "Manage the service catalogue and pricing." : tab === "Customers" ? "Review customer demo accounts and activity." : "Create advisor logins and assign service centers."}</p>
+            <p>{tab === "Appointments" ? "Review, filter, export, and update appointment requests." : tab === "Services" ? "Manage the service catalogue and pricing." : "Review customer demo accounts and activity."}</p>
           </div>
           <button className="table-action export-operations" type="button" onClick={exportBookings}><Download size={15} /> Export Excel (.csv)</button>
         </div>
@@ -545,9 +514,8 @@ export default function Admin() {
           </>
         ) : tab === "Overview" ? null : (
           <div className="customer-list account-management-list">
-            <div className={`account-search-row ${tab === "Advisors" ? "advisor-account-toolbar" : ""}`}>
+            <div className="account-search-row">
               <SearchInput value={q} onChange={(event) => setQ(event.target.value)} placeholder={`Search ${tab.toLowerCase()}`} />
-              {tab === "Advisors" && <button className="btn primary create-advisor-button" type="button" onClick={() => setShowCreateAdvisor(true)}><UserPlus size={16} /> Create advisor</button>}
             </div>
             {managedAccounts.map((account) => {
               const customerBookings = bookings.filter((booking) => booking.customerEmail
@@ -556,14 +524,12 @@ export default function Admin() {
               const accountVehicles = vehicles.filter((vehicle) => vehicle.ownerEmail
                 ? vehicle.ownerEmail.toLowerCase() === account.email.toLowerCase()
                 : vehicle.ownerName?.toLowerCase() === account.name.toLowerCase());
-              const advisorJobs = bookings.filter((booking) => booking.advisorEmail === account.email);
               const active = !disabledEmails.includes(account.email);
               return (
                 <div key={account.id || account.email}>
                   <span className="avatar">{account.name?.[0] || account.email[0].toUpperCase()}</span>
                   <span className="account-identity"><b>{account.name}</b><small>{account.username ? `Username: ${account.username}` : account.email}</small></span>
-                  <span className="account-activity">{account.role === "Customer" ? `${accountVehicles.length} vehicles · ${customerBookings.length} bookings` : `${advisorJobs.length} assigned appointments`}</span>
-                  {account.role === "Service Advisor" && <label className="advisor-center-assignment">Service center<select aria-label={`Assign service center for ${account.name}`} value={account.serviceCenterId || ""} onChange={(event) => updateAdvisorCenter(account, event.target.value)}><option value="">Choose a center</option>{centers.map((center) => <option key={center.id} value={center.id}>{center.name.replace(/^Auto Dealer\s*[–-]\s*/i, "")}</option>)}</select></label>}
+                  <span className="account-activity">{accountVehicles.length} vehicles · {customerBookings.length} bookings</span>
                   <span className={`account-state ${active ? "active" : "inactive"}`}>{active ? "Active" : "Inactive"}</span>
                   <div className="account-actions">
                     <button className="table-action" type="button" onClick={() => toggleAccount(account)}>{active ? "Deactivate" : "Activate"}</button>
@@ -576,25 +542,11 @@ export default function Admin() {
           </div>
         )}
       </section>}
-      {showCreateAdvisor && <AccessibleDialog className="form-modal service-create-modal" labelledBy="create-advisor-title" onClose={() => setShowCreateAdvisor(false)}>
-        <button className="modal-close" type="button" aria-label="Close create advisor form" onClick={() => setShowCreateAdvisor(false)}><X size={18} /></button>
-        <span className="eyebrow">ADVISOR ACCESS · DEMO ONLY</span>
-        <h2 id="create-advisor-title">Create an advisor account</h2>
-        <p>Set a username, numeric PIN, and the service center this advisor will manage.</p>
-        <form className="service-create-form" onSubmit={createAdvisor}>
-          <label>Advisor full name<input autoFocus required maxLength="80" value={advisorForm.name} onChange={(event) => setAdvisorForm((current) => ({ ...current, name: event.target.value }))} placeholder="e.g. Dev Malhotra" /></label>
-          <label>Username<input required minLength="3" maxLength="24" pattern="[A-Za-z0-9._-]{3,24}" autoCapitalize="none" value={advisorForm.username} onChange={(event) => setAdvisorForm((current) => ({ ...current, username: event.target.value }))} placeholder="e.g. dev.malhotra" /></label>
-          <label>Temporary PIN<input required type="password" inputMode="numeric" minLength="4" maxLength="8" pattern="[0-9]{4,8}" autoComplete="new-password" value={advisorForm.pin} onChange={(event) => setAdvisorForm((current) => ({ ...current, pin: event.target.value.replace(/\D/g, "").slice(0, 8) }))} placeholder="4–8 digits" /></label>
-          <label>Assigned service center<select required value={advisorForm.serviceCenterId} onChange={(event) => setAdvisorForm((current) => ({ ...current, serviceCenterId: event.target.value }))}><option value="">Choose a center</option>{centers.map((center) => <option key={center.id} value={center.id}>{center.name}</option>)}</select></label>
-          <p className="demo-advisor-note">The PIN is stored as a salted verifier in this browser demo. This is not production authentication.</p>
-          <div className="service-create-actions"><button className="btn outline" type="button" onClick={() => setShowCreateAdvisor(false)}>Cancel</button><button className="btn primary" type="submit">Create advisor</button></div>
-        </form>
-      </AccessibleDialog>}
       {accountToDelete && <AccessibleDialog className="form-modal service-create-modal account-delete-dialog" labelledBy="delete-account-title" describedBy="delete-account-description" onClose={() => setAccountToDelete(null)}>
         <button className="modal-close" type="button" aria-label="Close delete account confirmation" onClick={() => setAccountToDelete(null)}><X size={18} /></button>
         <span className="eyebrow">DEMO ACCOUNT MANAGEMENT</span>
         <h2 id="delete-account-title">Delete {accountToDelete.role.toLowerCase()} account?</h2>
-        <p id="delete-account-description">This permanently removes {accountToDelete.name}'s demo login. Customer deletion also removes their vehicles and appointments. Advisor appointments stay in the records with the advisor assignment cleared.</p>
+        <p id="delete-account-description">This permanently removes {accountToDelete.name}'s demo login, vehicles, and appointments.</p>
         <div className="service-create-actions">
           <button className="btn outline" type="button" onClick={() => setAccountToDelete(null)}>Keep account</button>
           <button className="btn danger" type="button" onClick={() => removeAccount(accountToDelete)}>Delete account</button>

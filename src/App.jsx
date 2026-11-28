@@ -34,15 +34,13 @@ const History = lazy(() =>
 );
 const Profile = lazy(() => import("./profile"));
 const Admin = lazy(() => import("./admin"));
-const Advisor = lazy(() => import("./advisor"));
 const Auth = lazy(() => import("./auth"));
 const CUSTOMER_ROLES = ["Customer"];
-const ACCOUNT_ROLES = ["Customer", "Service Advisor", "Administrator"];
+const ACCOUNT_ROLES = ["Customer", "Administrator"];
 
 /** Sends signed-in users to the home screen for their own role. */
 function roleHome(role) {
   if (role === "Administrator") return "/admin";
-  if (role === "Service Advisor") return "/advisor";
   return "/dashboard";
 }
 
@@ -150,14 +148,6 @@ export default function App() {
               element={
                 <Protected roles={["Administrator"]}>
                   <Admin />
-                </Protected>
-              }
-            />
-            <Route
-              path="/advisor"
-              element={
-                <Protected roles={["Service Advisor"]}>
-                  <Advisor />
                 </Protected>
               }
             />
